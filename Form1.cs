@@ -242,6 +242,7 @@ namespace PolygonCut
 		public void DrawPolyGons(PictureBox pb)
 		{
 			Graphics g = pb.CreateGraphics();
+			g.Clear(Color.Gray);
 			foreach (PolyGon pl in polygons)
 			{
 				Pen penDrawLine = new Pen(Color.Red, 2);
