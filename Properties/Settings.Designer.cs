@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace PolygonCut1.Properties
+namespace PolygonCut.Properties
 {
 
 

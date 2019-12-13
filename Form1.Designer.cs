@@ -1,4 +1,4 @@
-﻿namespace PolygonCut1
+﻿namespace PolygonCut
 {
 	partial class Form1
 	{
