@@ -28,13 +28,50 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
+			this.Load = new System.Windows.Forms.Button();
+			this.MainPicBox = new System.Windows.Forms.PictureBox();
+			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).BeginInit();
+			this.SuspendLayout();
+			// 
+			// Load
+			// 
+			this.Load.Location = new System.Drawing.Point(12, 12);
+			this.Load.Name = "Load";
+			this.Load.Size = new System.Drawing.Size(116, 24);
+			this.Load.TabIndex = 0;
+			this.Load.Text = "加载图形";
+			this.Load.UseVisualStyleBackColor = true;
+			this.Load.Click += new System.EventHandler(this.Load_Click);
+			// 
+			// MainPicBox
+			// 
+			this.MainPicBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.MainPicBox.Location = new System.Drawing.Point(13, 43);
+			this.MainPicBox.Name = "MainPicBox";
+			this.MainPicBox.Size = new System.Drawing.Size(723, 462);
+			this.MainPicBox.TabIndex = 1;
+			this.MainPicBox.TabStop = false;
+			// 
+			// Form1
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(800, 450);
+			this.ClientSize = new System.Drawing.Size(748, 517);
+			this.Controls.Add(this.MainPicBox);
+			this.Controls.Add(this.Load);
+			this.Name = "Form1";
 			this.Text = "Form1";
+			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).EndInit();
+			this.ResumeLayout(false);
+
 		}
 
 		#endregion
+
+		private System.Windows.Forms.Button Load;
+		private System.Windows.Forms.PictureBox MainPicBox;
 	}
 }
 
