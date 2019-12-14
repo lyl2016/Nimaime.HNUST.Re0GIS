@@ -292,7 +292,8 @@ namespace PolygonCut
 						}
 						else
 						{
-							g.DrawLine(Pens.Blue, (int)(item.XMin + 0.5), y, FirstX - 1, y);
+							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX + 2, y);
+							//g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
 							flag = 0;
 						}
 					}
