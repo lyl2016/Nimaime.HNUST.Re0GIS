@@ -335,7 +335,7 @@ namespace PolygonCut
 					{
 						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rare);
 					}
-					//边框检查，不相交
+					//多边形边框检查，不相交
 					else
 					{
 						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rare);
@@ -355,7 +355,8 @@ namespace PolygonCut
 						Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
 						//单独检查两个面的最后一条边是否相交
 					}
-					//边框检查得交，检查线交点
+					///边框检查得交，检查线交点
+					///使用Boxing检查法，减少运算量
 				}
 			}
 			///每次检查两个多边形
