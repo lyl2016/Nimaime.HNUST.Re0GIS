@@ -333,16 +333,27 @@ namespace PolygonCut
 				{
 					if (polygons[front].ymax < polygons[rare].ymin || polygons[front].xmax < polygons[rare].xmin)
 					{
-						Console.WriteLine("多边形{0}与多边形{1}不相交", front + 1, rare + 1);
+						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rare);
 					}
 					//边框检查，不相交
 					else
 					{
-						Console.WriteLine("多边形{0}与多边形{1}可能相交", front + 1, rare + 1);
-						for(int i = 0; i < polygons[front].points.Count; i++)
+						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rare);
+						for(int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
-							Console.WriteLine("多边形{0}的坐标如下：" + polygons[front].points[i].X + " " + polygons[front].points[i].Y, front + 1);
+							for(int j = 0; j < polygons[rare].points.Count - 1; j++)
+							{
+								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rare, j);
+							}
 						}
+						//检查所有其它边（不包括最后一条边）
+						for(int j = 0;j< polygons[rare].points.Count - 1; j++)
+						{
+							Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, j);
+						}
+						//检查front的最后一边与rare的其它边
+						Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+						//单独检查两个面的最后一条边是否相交
 					}
 					//边框检查得交，检查线交点
 				}
