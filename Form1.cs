@@ -35,6 +35,7 @@ namespace PolygonCut
 			PolyGons polygons = new PolyGons();
 			polygons.ReadShapeFile(filename);
 			polygons.DrawPolyGons(MainPicBox);
+			polygons.CutAndRebuildPolygons();
 		}
 	}
 
@@ -98,23 +99,37 @@ namespace PolygonCut
 			NextVertex = null;
 			ID = 0;
 		}
-		//默认构造函数，内含前一顶点ID以及后一顶点ID，以及其所属的折线段的ID
+		//默认构造函数，内含前一顶点ID以及后一顶点ID，以及构造时的初始ID
 	}
 	//定义类Vertex（顶点）
 
+/*	class BasicLine
+	{
+	//	public int ID_line;					//线段ID
+		public int PolygonID;				//线段所属面ID
+		public PointF point1;				//顶点1
+		public PointF point2;				//顶点2
+		public BasicLine()
+		{
+
+		}
+	}
+	//定义直线用于交点检查
+*/
 	class PolyGon
 	{
-		public int id;//面ID
-		public int RecordLength;//SHP记录长度
-		public int ShapeType;//SHP图形类型
-		public double xmin;//SHP内X最小值
-		public double ymin;//SHP内Y最小值
-		public double xmax;//SHP内X最大值
-		public double ymax;//SHP内Y最大值
-		public int NumOfParts;//SHP内面数量
-		public int NumOfPoints;//SHP内面数量
-		public int[] Parts;//SHP内每个部分所占长度
-		public List<Vertex> points;//由顶点构成的集合
+		public int id;						//面ID
+		public int RecordLength;			//SHP记录长度
+		public int ShapeType;				//SHP图形类型
+		public double xmin;					//SHP内X最小值
+		public double ymin;					//SHP内Y最小值
+		public double xmax;					//SHP内X最大值
+		public double ymax;					//SHP内Y最大值
+		public int NumOfParts;				//SHP内面数量
+		public int NumOfPoints;				//SHP内点数量
+		public int[] Parts;					//SHP内每个部分索引数组
+		public List<Vertex> points;			//由顶点构成的集合
+	//	public List<BasicLine> lines;		//由多边形基础直线构成的集合
 		public PolyGon()
 		{
 			points = new List<Vertex>();
@@ -172,63 +187,63 @@ namespace PolygonCut
 			{
 				while (true)
 				{
-					PolyGon polyL = new PolyGon();
+					PolyGon polyG = new PolyGon();
 					//====
-					polyL.id = (Int32)ReverseBytes(br.ReadUInt32());
-					polyL.RecordLength = (Int32)ReverseBytes(br.ReadUInt32());
-					polyL.ShapeType = br.ReadInt32();
-					polyL.xmin = br.ReadDouble();
-					polyL.ymin = br.ReadDouble();
-					polyL.xmax = br.ReadDouble();
-					polyL.ymax = br.ReadDouble();
-					polyL.NumOfParts = br.ReadInt32();
-					polyL.NumOfPoints = br.ReadInt32();
+					polyG.id = (Int32)ReverseBytes(br.ReadUInt32());
+					polyG.RecordLength = (Int32)ReverseBytes(br.ReadUInt32());
+					polyG.ShapeType = br.ReadInt32();
+					polyG.xmin = br.ReadDouble();
+					polyG.ymin = br.ReadDouble();
+					polyG.xmax = br.ReadDouble();
+					polyG.ymax = br.ReadDouble();
+					polyG.NumOfParts = br.ReadInt32();
+					polyG.NumOfPoints = br.ReadInt32();
 					//====
-					polyL.Parts = new int[polyL.NumOfParts];//长度为NumOfParts的数组，即线的数量
-					for (int i = 0; i < polyL.NumOfParts; i++)
+					polyG.Parts = new int[polyG.NumOfParts];//长度为NumOfParts的数组，即线的数量
+					for (int i = 0; i < polyG.NumOfParts; i++)
 					{
-						polyL.Parts[i] = br.ReadInt32();
+						polyG.Parts[i] = br.ReadInt32();
 					}
 					//面首点数组索引位
 					Vertex PreVer = null;
 					Vertex VertexFirst = new Vertex();
 					//====
 					VertexFirst.ID = 1;
-					VertexFirst.PolygonID = polyL.id;
+					VertexFirst.PolygonID = polyG.id;
 					VertexFirst.PreVertex = null;
 					VertexFirst.NextVertex = null;
 					VertexFirst.X = br.ReadDouble();
 					VertexFirst.Y = br.ReadDouble();
 					PreVer = VertexFirst;
 					//====
-					polyL.points.Add(VertexFirst);
-					for (int i = 1; i < polyL.NumOfPoints - 1; i++)
+					polyG.points.Add(VertexFirst);
+					for (int i = 1; i < polyG.NumOfPoints - 1; i++)
 					{
 						Vertex VertexMid = new Vertex();
 						//====
 						VertexMid.PreVertex = PreVer;
 						VertexMid.PreVertex.NextVertex = VertexMid;
 						VertexMid.ID = PreVer.ID + 1;
-						VertexMid.PolygonID = polyL.id;
+						VertexMid.PolygonID = polyG.id;
 						VertexMid.X = br.ReadDouble();
 						VertexMid.Y = br.ReadDouble();
 						VertexMid.NextVertex = null;
 						PreVer = VertexMid;
 						//====
-						polyL.points.Add(VertexMid);
+						polyG.points.Add(VertexMid);
 					}
 					Vertex VetLast = new Vertex();
 					//====
 					VetLast.PreVertex = PreVer;
 					PreVer.NextVertex = VetLast;
 					VetLast.ID = VetLast.PreVertex.ID + 1;
-					VetLast.PolygonID = polyL.id;
+					VetLast.PolygonID = polyG.id;
 					VetLast.NextVertex = null;
 					VetLast.X = br.ReadDouble();
 					VetLast.Y = br.ReadDouble();
 					//====
-					polyL.points.Add(VetLast);
-					polygons.Add(polyL);
+					polyG.points.Add(VetLast);
+					polygons.Add(polyG);
 					count++;
 				}
 			}
@@ -243,21 +258,22 @@ namespace PolygonCut
 		{
 			Graphics g = pb.CreateGraphics();
 			g.Clear(Color.Gray);
-			foreach (PolyGon pl in polygons)
+			foreach (PolyGon pg in polygons)
 			{
 				Pen penDrawLine = new Pen(Color.Red, 2);
 				Pen penDrawPolygon = new Pen(Color.Green, 2);
-				PointF[] pointsF = new PointF[pl.points.Count];
+				PointF[] pointsF = new PointF[pg.points.Count];
 				for (int i = 0; i < pointsF.Length; i++)
 				{
-					pointsF[i].X = (float)(pl.points[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width;
-					pointsF[i].Y = (float)(pb.Height - (pl.points[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height);
+					pointsF[i].X = (float)(pg.points[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width / 2.0F + pb.Width / 4;
+					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height / 2.0F - pb.Height / 4);
+				//	Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
 				}
 				g.DrawLines(penDrawLine, pointsF);
+				//绘制多边形面
 
-				
 				EdgeInfo[] edgelist = new EdgeInfo[100];
-				int j = 0, yu = 0, yd = 1024;//需修改为图框上部
+				int j = 0, yu = 0, yd = 1024;
 				for (int i = 0; i < pointsF.Length - 1; i++)
 				{
 					if (pointsF[i].Y > yu) yu = (int)pointsF[i].Y;
@@ -305,7 +321,36 @@ namespace PolygonCut
 						}
 					}
 				}
-			}		
+				//扫描线填充
+			}
 		}
+		//绘制多边形（边加粗，内部填充）
+		public void CutAndRebuildPolygons()
+		{
+			for (int front = 0; front <= polygons.Count - 2; front++)
+			{
+				for (int rare = front + 1; rare <= polygons.Count - 1; rare++)
+				{
+					if (polygons[front].ymax < polygons[rare].ymin || polygons[front].xmax < polygons[rare].xmin)
+					{
+						Console.WriteLine("多边形{0}与多边形{1}不相交", front + 1, rare + 1);
+					}
+					//边框检查，不相交
+					else
+					{
+						Console.WriteLine("多边形{0}与多边形{1}可能相交", front + 1, rare + 1);
+						for(int i = 0; i < polygons[front].points.Count; i++)
+						{
+							Console.WriteLine("多边形{0}的坐标如下：" + polygons[front].points[i].X + " " + polygons[front].points[i].Y, front + 1);
+						}
+					}
+					//边框检查得交，检查线交点
+				}
+			}
+			///每次检查两个多边形
+			///首先检查他们的边框，假如边框不交则跳过（节省大部分时间）
+			///然后具体检查线段相交
+		}
+		//检查多边形交点（未完全实现）
 	}
 }
