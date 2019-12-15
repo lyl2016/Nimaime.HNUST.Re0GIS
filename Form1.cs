@@ -17,25 +17,30 @@ namespace PolygonCut
 
 		private void Load_Click(object sender, EventArgs e)
 		{
-			string filename = @"D:\LYLUs\Desktop\ShortestPath\road2.shp";
-			OpenFileDialog dialog = new OpenFileDialog();
-			dialog.Multiselect = false;//该值确定是否可以选择多个文件
-			dialog.Title = "请选择Shapefile文件";
-			dialog.Filter = "Shapefile文件(*.shp)|*.shp";
-			if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+			bool is_ascfile_open = false;
+			while (is_ascfile_open == false)
 			{
-				filename = dialog.FileName;
-				//is_ascfile_open = true;
+				string filename = @"D:\LYLUs\Desktop\ShortestPath\road2.shp";
+				OpenFileDialog dialog = new OpenFileDialog();
+				dialog.Multiselect = false;//该值确定是否可以选择多个文件
+				dialog.Title = "请选择Shapefile文件";
+				dialog.Filter = "Shapefile文件(*.shp)|*.shp";
+				if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+				{
+					filename = dialog.FileName;
+					is_ascfile_open = true;
+					PolyGons polygons = new PolyGons();
+					polygons.ReadShapeFile(filename);
+					polygons.DrawPolyGons(MainPicBox);
+					polygons.CutAndRebuildPolygons();
+				}
+				else
+				{
+					filename = "";
+					is_ascfile_open = false;
+				}
 			}
-			else
-			{
-				filename = "";
-				//is_ascfile_open = false;
-			}
-			PolyGons polygons = new PolyGons();
-			polygons.ReadShapeFile(filename);
-			polygons.DrawPolyGons(MainPicBox);
-			polygons.CutAndRebuildPolygons();
+			
 		}
 	}
 
