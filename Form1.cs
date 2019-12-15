@@ -371,5 +371,30 @@ namespace PolygonCut
 			///然后具体检查线段相交
 		}
 		//检查多边形交点（未完全实现）
+		public double determinant(double v1, double v2, double v3, double v4) 
+		{
+			return (v1 * v3 - v2 * v4);
+		}
+		//计算行列式
+		public bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
+		{
+			double delta = determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
+			if (delta <= (1e-6) && delta >= -(1e-6))  // delta=0，表示两线段重合或平行  
+			{
+				return false;
+			}
+			double namenda = determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
+			if (namenda > 1 || namenda < 0)
+			{
+				return false;
+			}
+			double miu = determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
+			if (miu > 1 || miu < 0)
+			{
+				return false;
+			}
+			return true;
+		}
+		//通过两点坐标判断直线是否相交
 	}
 }
