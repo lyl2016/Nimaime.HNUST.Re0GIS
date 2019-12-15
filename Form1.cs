@@ -253,8 +253,8 @@ namespace PolygonCut
 			}
 			catch (EndOfStreamException e)
 			{
-				//MessageBox.Show(e.ToString());
-				//MessageBox.Show("Ending of File");				
+				Console.WriteLine(e.ToString());
+				Console.WriteLine("文件读取完毕");				
 			}
 		}
 		//读取SHP文件内容
@@ -331,6 +331,7 @@ namespace PolygonCut
 		//绘制多边形（边加粗，内部填充）
 		public void CutAndRebuildPolygons()
 		{
+			bool Inse;//此处需要重构
 			for (int front = 0; front <= polygons.Count - 2; front++)
 			{
 				for (int rare = front + 1; rare <= polygons.Count - 1; rare++)
@@ -351,15 +352,54 @@ namespace PolygonCut
 							for(int j = 0; j < polygons[rare].points.Count - 1; j++)
 							{
 								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rare, j);
+								PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
+								PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
+								PointF point2a = new PointF((float)polygons[rare].points[j].X, (float)polygons[rare].points[j].Y);
+								PointF point2b = new PointF((float)polygons[rare].points[j + 1].X, (float)polygons[rare].points[j + 1].Y);
+								Inse = CheckIfInse(point1a, point1b, point2a, point2b);
+								if (Inse)
+								{
+									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rare, j);
+								}
+								else
+								{
+									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rare, j);
+								}
 							}
 						}
 						//检查所有其它边（不包括最后一条边）
 						for(int j = 0; j < polygons[rare].points.Count - 1; j++)
 						{
 							Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, j);
+							PointF point1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
+							PointF point1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
+							PointF point2a = new PointF((float)polygons[rare].points[j].X, (float)polygons[rare].points[j].Y);
+							PointF point2b = new PointF((float)polygons[rare].points[j + 1].X, (float)polygons[rare].points[j + 1].Y);
+							Inse = CheckIfInse(point1a, point1b, point2a, point2b);
+							if (Inse)
+							{
+								Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, j);
+							}
+							else
+							{
+								Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, j);
+							}
 						}
 						//检查front的最后一边与rare的其它边
 						Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+						PointF p1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
+						PointF p1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
+						PointF p2a = new PointF((float)polygons[rare].points[polygons[rare].points.Count - 1].X, (float)polygons[rare].points[polygons[rare].points.Count - 1].Y);
+						PointF p2b = new PointF((float)polygons[rare].points[0].X, (float)polygons[rare].points[0].Y);
+						Inse = CheckIfInse(p1a, p1b, p2a, p2b);
+						if (Inse)
+						{
+							Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+						}
+						else
+						{
+							Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+						}
 						//单独检查两个面的最后一条边是否相交
 					}
 					///边框检查得交，检查线交点
@@ -371,24 +411,24 @@ namespace PolygonCut
 			///然后具体检查线段相交
 		}
 		//检查多边形交点（未完全实现）
-		public double determinant(double v1, double v2, double v3, double v4) 
+		public double Determinant(double v1, double v2, double v3, double v4) 
 		{
 			return (v1 * v3 - v2 * v4);
 		}
 		//计算行列式
 		public bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
-			double delta = determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
+			double delta = Determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
 			if (delta <= (1e-6) && delta >= -(1e-6))  // delta=0，表示两线段重合或平行  
 			{
 				return false;
 			}
-			double namenda = determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
-			if (namenda > 1 || namenda < 0)
+			double namda = Determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
+			if (namda > 1 || namda < 0)
 			{
 				return false;
 			}
-			double miu = determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
+			double miu = Determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
 			if (miu > 1 || miu < 0)
 			{
 				return false;
