@@ -325,7 +325,7 @@ namespace PolygonCut
 						}
 					}
 				}
-				//扫描线填充
+				//扫描线填充xxx填充色
 			}
 		}
 		//绘制多边形（边加粗，内部填充）
@@ -409,14 +409,15 @@ namespace PolygonCut
 			///每次检查两个多边形
 			///首先检查他们的边框，假如边框不交则跳过（节省大部分时间）
 			///然后具体检查线段相交
+			///1. 当多边形rare的一条直线不在front内的时候跳过行列式运算，并判定不相交，该直线列入front的黑名单
 		}
 		//检查多边形交点（未完全实现）
-		public double Determinant(double v1, double v2, double v3, double v4) 
+		private double Determinant(double v1, double v2, double v3, double v4) 
 		{
 			return (v1 * v3 - v2 * v4);
 		}
 		//计算行列式
-		public bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
+		private bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			double delta = Determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
 			if (delta <= (1e-6) && delta >= -(1e-6))  // delta=0，表示两线段重合或平行  
