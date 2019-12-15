@@ -35,9 +35,10 @@
 			// 
 			// Load
 			// 
-			this.Load.Location = new System.Drawing.Point(12, 12);
+			this.Load.Location = new System.Drawing.Point(14, 14);
+			this.Load.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.Load.Name = "Load";
-			this.Load.Size = new System.Drawing.Size(116, 24);
+			this.Load.Size = new System.Drawing.Size(130, 29);
 			this.Load.TabIndex = 0;
 			this.Load.Text = "加载图形";
 			this.Load.UseVisualStyleBackColor = true;
@@ -48,19 +49,21 @@
 			this.MainPicBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.MainPicBox.Location = new System.Drawing.Point(13, 43);
+			this.MainPicBox.Location = new System.Drawing.Point(15, 52);
+			this.MainPicBox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.MainPicBox.Name = "MainPicBox";
-			this.MainPicBox.Size = new System.Drawing.Size(723, 462);
+			this.MainPicBox.Size = new System.Drawing.Size(813, 554);
 			this.MainPicBox.TabIndex = 1;
 			this.MainPicBox.TabStop = false;
 			// 
 			// Form1
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(748, 517);
+			this.ClientSize = new System.Drawing.Size(842, 620);
 			this.Controls.Add(this.MainPicBox);
 			this.Controls.Add(this.Load);
+			this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.Name = "Form1";
 			this.Text = "Form1";
 			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).EndInit();

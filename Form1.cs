@@ -20,7 +20,7 @@ namespace PolygonCut
 			bool is_ascfile_open = false;
 			while (is_ascfile_open == false)
 			{
-				string filename = @"D:\LYLUs\Desktop\ShortestPath\road2.shp";
+				string filename;
 				OpenFileDialog dialog = new OpenFileDialog();
 				dialog.Multiselect = false;//该值确定是否可以选择多个文件
 				dialog.Title = "请选择Shapefile文件";
@@ -40,7 +40,6 @@ namespace PolygonCut
 					is_ascfile_open = false;
 				}
 			}
-			
 		}
 	}
 
@@ -336,7 +335,10 @@ namespace PolygonCut
 			{
 				for (int rare = front + 1; rare <= polygons.Count - 1; rare++)
 				{
-					if (polygons[front].ymax < polygons[rare].ymin || polygons[front].xmax < polygons[rare].xmin)
+					if (polygons[front].ymax < polygons[rare].ymin
+						|| polygons[front].xmax < polygons[rare].xmin
+						|| polygons[rare].ymax < polygons[front].ymin
+						|| polygons[rare].xmax < polygons[front].xmin)
 					{
 						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rare);
 					}
@@ -352,7 +354,7 @@ namespace PolygonCut
 							}
 						}
 						//检查所有其它边（不包括最后一条边）
-						for(int j = 0;j< polygons[rare].points.Count - 1; j++)
+						for(int j = 0; j < polygons[rare].points.Count - 1; j++)
 						{
 							Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, j);
 						}
