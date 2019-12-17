@@ -19,7 +19,7 @@ namespace PolygonCut
 			InitializeComponent();
 		}
 
-		private void Load_Click(object sender, EventArgs e)
+		private void File_Open_Polygon_Click(object sender, EventArgs e)
 		{
 			bool is_ascfile_open = false;
 			while (is_ascfile_open == false)
@@ -269,7 +269,7 @@ namespace PolygonCut
 			foreach (PolyGon pg in polygons)
 			{
 				int iSeed = 10;
-				Random ro = new Random(10);
+				Random ro = new Random(iSeed);
 				long tick = DateTime.Now.Ticks;
 				Random ran = new Random((int)(tick & 0xffffffffL) | (int)(tick >> 32));
 				int R = ran.Next(255);
@@ -278,6 +278,7 @@ namespace PolygonCut
 				B = (R + G > 400) ? R + G - 400 : B;//0 : 380 - R - G;
 				B = (B > 255) ? 255 : B;
 				//生成随机颜色
+
 				Pen penDrawLine = new Pen(Color.Red, 2);
 				Pen penDrawPolygon = new Pen(Color.FromArgb(R, G, B), 2);
 				PointF[] pointsF = new PointF[pg.points.Count];
@@ -366,9 +367,9 @@ namespace PolygonCut
 					else
 					{
 						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rare);
-						for(int i = 0; i < polygons[front].points.Count - 1; i++)
+						string blacklist_j = "";
+						for (int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
-							string blacklist_j = "";
 							for (int j = 0; j < polygons[rare].points.Count - 1; j++)
 							{
 								if (blacklist_j.Contains(Convert.ToString(j)))
@@ -477,7 +478,7 @@ namespace PolygonCut
 		private bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			double delta = Determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
-			if (delta <= (1e-6) && delta >= -(1e-6))  // delta=0，表示两线段重合或平行  
+			if (delta <= (1e-6) && delta >= -(1e-6))  // delta = 0，表示两线段重合或平行  
 			{
 				return false;
 			}
