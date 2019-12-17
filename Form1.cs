@@ -284,8 +284,8 @@ namespace PolygonCut
 				PointF[] pointsF = new PointF[pg.points.Count];
 				for (int i = 0; i < pointsF.Length; i++)
 				{
-					pointsF[i].X = (float)(pg.points[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width / 2.0F + pb.Width / 4;
-					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height / 2.0F - pb.Height / 4);
+					pointsF[i].X = (float)((pg.points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
+					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
 				//	Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
 				}
 				g.DrawLines(penDrawLine, pointsF);
@@ -400,7 +400,7 @@ namespace PolygonCut
 								else
 								{
 									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rare, j);
-									Console.WriteLine("边{0}已加入多边形{1}加入黑名单", j, front);
+									Console.WriteLine("边{0}已加入多边形{1}的黑名单", j, front);
 									blacklist_j += Convert.ToString(j);
 								}
 							}
