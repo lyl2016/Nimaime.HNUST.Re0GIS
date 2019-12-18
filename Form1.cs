@@ -38,7 +38,7 @@ namespace PolygonCut
 				dialog.Multiselect = false;//该值确定是否可以选择多个文件
 				dialog.Title = "请选择Shapefile文件";
 				dialog.Filter = "Shapefile文件(*.shp)|*.shp";
-				if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+				if(dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
 				{
 					filename = dialog.FileName;
 					is_ascfile_open = true;
@@ -221,7 +221,7 @@ namespace PolygonCut
 					polyG.NumOfPoints = br.ReadInt32();
 					//====
 					polyG.Parts = new int[polyG.NumOfParts];//长度为NumOfParts的数组，即线的数量
-					for (int i = 0; i < polyG.NumOfParts; i++)
+					for(int i = 0; i < polyG.NumOfParts; i++)
 					{
 						polyG.Parts[i] = br.ReadInt32();
 					}
@@ -238,7 +238,7 @@ namespace PolygonCut
 					PreVer = VertexFirst;
 					//====
 					polyG.points.Add(VertexFirst);
-					for (int i = 1; i < polyG.NumOfPoints - 1; i++)
+					for(int i = 1; i < polyG.NumOfPoints - 1; i++)
 					{
 						Vertex VertexMid = new Vertex();
 						//====
@@ -279,7 +279,7 @@ namespace PolygonCut
 		{
 			Graphics g = pb.CreateGraphics();
 			g.Clear(Color.Gray);
-			foreach (PolyGon pg in polygons)
+			foreach(PolyGon pg in polygons)
 			{
 				int iSeed = 10;
 				Random ro = new Random(iSeed);
@@ -295,7 +295,7 @@ namespace PolygonCut
 				Pen penDrawLine = new Pen(Color.Red, 2);
 				Pen penDrawPolygon = new Pen(Color.FromArgb(R, G, B), 2);
 				PointF[] pointsF = new PointF[pg.points.Count];
-				for (int i = 0; i < pointsF.Length; i++)
+				for(int i = 0; i < pointsF.Length; i++)
 				{
 					pointsF[i].X = (float)((pg.points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
 					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
@@ -305,13 +305,13 @@ namespace PolygonCut
 
 				EdgeInfo[] edgelist = new EdgeInfo[1024];
 				int j = 0, yu = 0, yd = 1024;
-				for (int i = 0; i < pointsF.Length - 1; i++)
+				for(int i = 0; i < pointsF.Length - 1; i++)
 				{
-					if (pointsF[i].Y > yu) yu = (int)pointsF[i].Y;
-					if (pointsF[i].Y < yd) yd = (int)pointsF[i].Y;
-					if (pointsF[i].Y != pointsF[i + 1].Y)
+					if(pointsF[i].Y > yu) yu = (int)pointsF[i].Y;
+					if(pointsF[i].Y < yd) yd = (int)pointsF[i].Y;
+					if(pointsF[i].Y != pointsF[i + 1].Y)
 					{
-						if (pointsF[i].Y > pointsF[i + 1].Y)
+						if(pointsF[i].Y > pointsF[i + 1].Y)
 						{
 							edgelist[j++] = new EdgeInfo((int)pointsF[i + 1].X, (int)pointsF[i + 1].Y, (int)pointsF[i].X, (int)pointsF[i].Y);
 						}
@@ -321,7 +321,7 @@ namespace PolygonCut
 						}
 					}
 				}
-				for (int y = yd; y < yu; y++)
+				for(int y = yd; y < yu; y++)
 				{
 					//AEL
 					var sorted = from item in edgelist
@@ -329,10 +329,10 @@ namespace PolygonCut
 								 orderby item.XMin, item.K
 								 select item;
 					int flag = 0;
-					foreach (var item in sorted)
+					foreach(var item in sorted)
 					{
 						//FirstX = 0;
-						if (flag == 0)
+						if(flag == 0)
 						{
 							FirstX = (int)(item.XMin + 0.5);
 							flag++;
@@ -344,9 +344,9 @@ namespace PolygonCut
 							flag = 0;
 						}
 					}
-					for (int i = 0; i < j; i++)
+					for(int i = 0; i < j; i++)
 					{
-						if (y < edgelist[i].YMax - 1 && y > edgelist[i].YMin)
+						if(y < edgelist[i].YMax - 1 && y > edgelist[i].YMin)
 						{
 							edgelist[i].XMin += edgelist[i].K;
 						}
@@ -362,7 +362,7 @@ namespace PolygonCut
 			Pen draw_point = new Pen(Color.Red, 1);
 			Brush brush = new SolidBrush(Color.LightGreen);
 			PointF[] pointsF = new PointF[inse_points.Count];
-			for (int i = 0; i < pointsF.Length; i++)
+			for(int i = 0; i < pointsF.Length; i++)
 			{
 				pointsF[i].X = (float)((inse_points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
 				pointsF[i].Y = (float)(pb.Height - (inse_points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
@@ -375,67 +375,67 @@ namespace PolygonCut
 		//绘制交点
 		public void CheckLineInPolygonsInse()
 		{
-			short Inse;
+			bool Inse;
 			Stopwatch stopWatch = new Stopwatch();
 			stopWatch.Start();
-			for (int front = 0; front <= polygons.Count - 2; front++)
+			for(int front = 0; front <= polygons.Count - 2; front++)
 			{
-				for (int rare = front + 1; rare <= polygons.Count - 1; rare++)
+				for(int rare = front + 1; rare <= polygons.Count - 1; rare++)
 				{
 					PointF left_up = new PointF((float)polygons[front].xmin, (float)polygons[front].ymax);
 					PointF right_up = new PointF((float)polygons[front].xmax, (float)polygons[front].ymax);
 					PointF left_down = new PointF((float)polygons[front].xmin, (float)polygons[front].ymin);
 					PointF right_down = new PointF((float)polygons[front].xmax, (float)polygons[front].ymin);
 					//多边形front的对角线
-					if (polygons[front].ymax < polygons[rare].ymin
+					if(polygons[front].ymax < polygons[rare].ymin
 						|| polygons[front].xmax < polygons[rare].xmin
 						|| polygons[rare].ymax < polygons[front].ymin
 						|| polygons[rare].xmax < polygons[front].xmin)
 					{
-						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rare);
+						//Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rare);
 						loop_time++;
 					}
 					//多边形碰撞箱检查，不相交
 					else
 					{
-						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rare);
+						//Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rare);
 						string blacklist_j = "";
-						for (int i = 0; i < polygons[front].points.Count - 1; i++)
+						for(int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
-							for (int j = 0; j < polygons[rare].points.Count - 1; j++)
+							for(int j = 0; j < polygons[rare].points.Count - 1; j++)
 							{
 								loop_time++;
-								if (blacklist_j.Contains(Convert.ToString(j)))
+								if(blacklist_j.Contains(Convert.ToString(j)))
 								{
-									Console.WriteLine("边{0}跳过", j);
+									//Console.WriteLine("边{0}跳过", j);
 									continue;
 								}
-								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rare, j);
+								//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rare, j);
 								PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
 								PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
 								PointF point2a = new PointF((float)polygons[rare].points[j].X, (float)polygons[rare].points[j].Y);
 								PointF point2b = new PointF((float)polygons[rare].points[j + 1].X, (float)polygons[rare].points[j + 1].Y);
-								if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
+								if((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
 									point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
 									//多边形rare的检查边点A在碰撞箱内
 									(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
 									point2b.Y > polygons[front].ymin && point2b.Y < polygons[front].ymax) ||
 									//多边形rare的检查边点B在碰撞箱内
-									CheckIfInse(point2a, point2b, left_up, right_down) != 0 ||
+									CheckIfInse(point2a, point2b, left_up, right_down) ||
 									//多边形rare的检查边与碰撞箱的＼对角线有交点
-									CheckIfInse(point2a, point2b, right_up, left_down) != 0
+									CheckIfInse(point2a, point2b, right_up, left_down)
 									//多边形rare的检查边与碰撞箱的／对角线有交点
 									)
 								{
 									Inse = CheckIfInse(point1a, point1b, point2a, point2b);
-									if (Inse != 0)
+									if(Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rare, j);
-										CalInsePoint(point1a, point1b, point2a, point2b, Inse);
+										CalInsePoint(point1a, point1b, point2a, point2b);
 									}
 									else
 									{
-										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rare, j);
+										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rare, j);
 									}
 								}
 								else
@@ -450,28 +450,28 @@ namespace PolygonCut
 						for(int j = 0; j < polygons[rare].points.Count - 1; j++)
 						{
 							loop_time++;
-							Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, j);
+							//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, j);
 							PointF point1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
 							PointF point1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
 							PointF point2a = new PointF((float)polygons[rare].points[j].X, (float)polygons[rare].points[j].Y);
 							PointF point2b = new PointF((float)polygons[rare].points[j + 1].X, (float)polygons[rare].points[j + 1].Y);
-							if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
+							if((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
 								point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
 								//多边形rare的检查边点A在碰撞箱内
 								(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
 								point2b.Y > polygons[front].ymin && point2b.Y < polygons[front].ymax) ||
 								//多边形rare的检查边点B在碰撞箱内
-								(CheckIfInse(point2a, point2b, left_up, right_down) != 0 ||
+								CheckIfInse(point2a, point2b, left_up, right_down) ||
 								//多边形rare的检查边与碰撞箱的＼对角线有交点
-								CheckIfInse(point2a, point2b, right_up, left_down) != 0)
+								CheckIfInse(point2a, point2b, right_up, left_down)
 								//多边形rare的检查边与碰撞箱的／对角线有交点
 								)
 							{
 								Inse = CheckIfInse(point1a, point1b, point2a, point2b);
-								if (Inse != 0)
+								if(Inse)
 								{
 									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, j);
-									CalInsePoint(point1a, point1b, point2a, point2b, Inse);
+									CalInsePoint(point1a, point1b, point2a, point2b);
 								}
 								else
 								{
@@ -484,43 +484,44 @@ namespace PolygonCut
 							}
 						}
 						//检查front的最后一边与rare的其它边
-						Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+						//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
 						PointF p1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
 						PointF p1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
 						PointF p2a = new PointF((float)polygons[rare].points[polygons[rare].points.Count - 1].X, (float)polygons[rare].points[polygons[rare].points.Count - 1].Y);
 						PointF p2b = new PointF((float)polygons[rare].points[0].X, (float)polygons[rare].points[0].Y);
-						if (p2a.X > polygons[front].xmin && p2a.X < polygons[front].xmax &&
+						if(p2a.X > polygons[front].xmin && p2a.X < polygons[front].xmax &&
 							p2a.Y > polygons[front].ymin && p2a.Y < polygons[front].ymax ||
 							//多边形rare的检查边点A在碰撞箱内
 							p2b.X > polygons[front].xmin && p2b.X < polygons[front].xmax &&
 							p2b.Y > polygons[front].ymin && p2b.Y < polygons[front].ymax ||
 							//多边形rare的检查边点B在碰撞箱内
-							CheckIfInse(p2a, p2b, left_up, right_down) != 0 ||
+							CheckIfInse(p2a, p2b, left_up, right_down) ||
 							//多边形rare的检查边与碰撞箱的＼对角线有交点
-							CheckIfInse(p2a, p2b, right_up, left_down) != 0
+							CheckIfInse(p2a, p2b, right_up, left_down)
 							//多边形rare的检查边与碰撞箱的／对角线有交点
 							)
 						{
 							Inse = CheckIfInse(p1a, p1b, p2a, p2b);
-							if (Inse != 0)
+							if(Inse)
 							{
 								Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
-								CalInsePoint(p1a, p1b, p2a, p2b, Inse);
+								CalInsePoint(p1a, p1b, p2a, p2b);
 							}
 							else
 							{
-								Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+								//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
 							}
 						}
 						else
 						{
-							Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+							//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
 						}
 						//单独检查两个面的最后一条边是否相交
 					}
 					//碰撞箱检查得交，检查线交点
 				}
 			}
+			//多边形之间检查
 			Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
 			stopWatch.Stop();
 			// Get the elapsed time as a TimeSpan value.
@@ -534,77 +535,27 @@ namespace PolygonCut
 			///当多边形rare的一条线段不在front内的时候跳过行列式运算，并判定不相交，该线段列入front的黑名单
 		}
 		//检查多边形内线段相交
-		private short CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
+		private bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			check_time++;
 			double delta = Determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
-			if (delta <= (1e-6) && delta >= -(1e-6))
+			if(Math.Abs(delta) <= (1e-6))
 			{
-				if ((a2.Y - a1.Y) / (a2.X - a1.X) - (a1.Y - b1.Y) / (a1.X - b1.X) >= -(1e-6) || (a2.Y - a1.Y) / (a2.X - a1.X) - (a1.Y - b1.Y) / (a1.X - b1.X) <= 1e-6)
-				{
-					if (a1.Y - a2.Y > -(1e-6) && a1.Y - a2.Y < 1e-6)
-					{
-						if ((b1.X >= a1.X && b1.X <= a2.X) || (b2.X >= a1.X && b2.X <= a2.X))
-						{
-							return 2;
-						}
-						//两线段有重合区
-						else
-						{
-							return 0;
-						}
-					}
-					//线段平行X坐标轴
-					else if((b1.X >= a1.X && b1.X <= a2.X) || (b2.X >= a1.X && b2.X <= a2.X))
-					{
-						return 2;
-						//两线段有重合区
-					}
-					//其他一般情况
-					else
-					{
-						return 0;
-						//共线无重合区
-					}
-				}
-				//两线段共直线，无垂直坐标轴的线
-				else if (a1.X - a2.X > -(1e-6) && a1.X - a2.X < 1e-6)
-				{
-					if ((b1.Y >= a1.Y && b1.Y <= a2.Y) || (b2.Y >= a1.Y && b2.Y <= a2.Y))
-					{
-						return 3;
-					}
-					//两线段有重合区
-					else
-					{
-						return 0;
-					}
-				}
-				//线段垂直X坐标轴
-				else
-				{
-					return 0;
-				}
-				//两线段不共直线
+				return false;
 			}
 			double lamda = Determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
-			if (lamda > 1 || lamda < 0)
+			if(lamda > 1 || lamda < 0)
 			{
-				return 0;
+				return false;
 			}
 			double myu = Determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
-			if (myu > 1 || myu < 0)
+			if(myu > 1 || myu < 0)
 			{
-				return 0;
+				return false;
 			}
-			return 1;
+			return true;
 		}
-		///通过两点坐标判断线段是否相交
-		///返回值：
-		///0	不相交
-		///1	一般情况相交
-		///2	一般情况共直线相交
-		///3	共直线垂直X坐标轴相交
+		//通过两点坐标判断线段是否相交
 		private double Determinant(double v1, double v2, double v3, double v4)
 		{
 			return (v1 * v3 - v2 * v4);
@@ -613,96 +564,53 @@ namespace PolygonCut
 		///2x2矩阵格式：
 		///v1	v2
 		///v4	v3
-		private void CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2, short Inse)
+		private void CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			PointF inse_point = new PointF();
-			if (Inse == 1)
-			{
-				if (a1.X - a2.X > -(1e-6) && a1.X - a2.X < 1e-6)
+			if(a1.X - a2.X > -(1e-6) && a1.X - a2.X < 1e-6)
 				{
 					inse_point.X = a1.X;
 					inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
 				}
-				//线段A垂直X坐标轴（加法 4，乘法 2）
-				else if (b1.X - b2.X > -(1e-6) && b1.X - b2.X < 1e-6)
+			//线段A垂直X坐标轴（加法 4，乘法 2）
+			else if(b1.X - b2.X > -(1e-6) && b1.X - b2.X < 1e-6)
 				{
 					inse_point.X = b1.X;
 					inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 				}
-				//线段B垂直X坐标轴（加法 4，乘法 2）
-				else if (a1.Y - a2.Y > -(1e-6) && a1.Y - a2.Y < 1e-6)
+			//线段B垂直X坐标轴（加法 4，乘法 2）
+			else if(a1.Y - a2.Y > -(1e-6) && a1.Y - a2.Y < 1e-6)
 				{
 					inse_point.Y = a1.Y;
 					inse_point.X = (a1.Y - b1.Y) / (b1.Y - b2.Y) * (b1.X - b2.X) + b1.Y;
 				}
-				//线段A平行X坐标轴（加法 4，乘法 2）
-				else if (b1.Y - b2.Y > -(1e-6) && b1.Y - b2.Y < 1e-6)
+			//线段A平行X坐标轴（加法 4，乘法 2）
+			else if(b1.Y - b2.Y > -(1e-6) && b1.Y - b2.Y < 1e-6)
 				{
 					inse_point.Y = b1.Y;
 					inse_point.X = (b1.Y - a1.Y) / (a1.Y - a2.Y) * (a1.X - a2.X) + a1.Y;
 				}
-				//线段B平行X坐标轴（加法 4，乘法 2）
-				else
+			//线段B平行X坐标轴（加法 4，乘法 2）
+			else
 				{
 					inse_point.X = ((a1.Y - b1.Y) + (b1.Y - b2.Y) / (b1.X - b2.X) * b1.X - (a1.Y - a2.Y) / (a1.X - a2.X) * a1.X) / ((b1.Y - b2.Y) / (b1.X - b2.X) - (a1.Y - a2.Y) / (a1.X - a2.X));
 					inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 				}
-				//其他一般情况（加法 16，乘法 8）
-				inse_points.Add(inse_point);
+			//其他一般情况（加法 16，乘法 8）
+			if(Math.Abs(inse_point.X - a1.X) <= 1e-6 && Math.Abs(inse_point.Y - a1.Y) <= 1e-6 ||
+				Math.Abs(inse_point.X - a2.X) <= 1e-6 && Math.Abs(inse_point.Y - a2.Y) <= 1e-6 ||
+				Math.Abs(inse_point.X - b1.X) <= 1e-6 && Math.Abs(inse_point.Y - b1.Y) <= 1e-6 ||
+				Math.Abs(inse_point.X - b2.X) <= 1e-6 && Math.Abs(inse_point.Y - b2.Y) <= 1e-6
+			)
+			{
+				//Console.WriteLine("直线端点，不取");
 			}
-			//非重合时加一点
 			else
 			{
-				if (Inse == 3)
-				{
-					if (b1.Y >= a1.Y && b1.Y <= a2.Y || b1.Y <= a1.Y && b1.Y >= a2.Y)
-					{
-						inse_points.Add(b1);//取点b1
-					}
-					//线段B点1在线段A内
-					if (b2.Y >= a1.Y && b2.Y <= a2.Y || b2.Y <= a1.Y && b2.Y >= a2.Y)
-					{
-						inse_points.Add(b2);//取点b2
-					}
-					//线段B点2在线段A内
-					if (a1.Y >= b1.Y && a1.Y <= b2.Y || a1.Y <= b1.Y && a1.Y >= b2.Y)
-					{
-						inse_points.Add(a1);//取点a1
-					}
-					//线段A点1在线段B内
-					if (a2.Y >= b1.Y && a2.Y <= b2.Y || a2.Y <= b1.Y && a2.Y >= b2.Y)
-					{
-						inse_points.Add(a2);//取点a2
-					}
-					//线段A点2在线段B内
-				}
-				//线段垂直X坐标轴
-				else// if ((b1.X >= a1.X && b1.X <= a2.X) || (b2.X >= a1.X && b2.X <= a2.X))
-				{
-					if (b1.X >= a1.X && b1.X <= a2.X || b1.X <= a1.X && b1.X >= a2.X)
-					{
-						inse_points.Add(b1);//取点b1
-					}
-					//线段B点1在线段A内
-					if (b2.X >= a1.X && b2.X <= a2.X || b2.X <= a1.X && b2.X >= a2.X)
-					{
-						inse_points.Add(b2);//取点b2
-					}
-					//线段B点2在线段A内
-					if (a1.X >= b1.X && a1.X <= b2.X || a1.X <= b1.X && a1.X >= b2.X)
-					{
-						inse_points.Add(a1);//取点a1
-					}
-					//线段A点1在线段B内
-					if (a2.X >= b1.X && a2.X <= b2.X || a2.X <= b1.X && a2.X >= b2.X)
-					{
-						inse_points.Add(a2);//取点a2
-					}
-					//线段A点2在线段B内
-				}
-				//其他一般情况
+				inse_points.Add(inse_point);
+				//非端点时加一点
 			}
-			//重合时加两点
+			//Console.WriteLine("inse_points：{0}", inse_points.Count);
 		}
 		///计算交点坐标
 		///通过线段两点式方程联立确定交点坐标
