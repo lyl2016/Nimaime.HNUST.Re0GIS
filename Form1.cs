@@ -37,7 +37,8 @@ namespace PolygonCut
 					PolyGons polygons = new PolyGons();
 					polygons.ReadShapeFile(filename);
 					polygons.DrawPolyGons(MainPicBox);
-					polygons.CutAndRebuildPolygons();
+					polygons.CheckLineInPolygonsInse();
+					polygons.DrawInsePoints(MainPicBox);
 				}
 				else
 				{
@@ -151,6 +152,7 @@ namespace PolygonCut
 	{
 		public int FirstX;
 		public List<PolyGon> polygons;//由多个面构成的面组
+		public List<PointF> inse_points = new List<PointF>();
 		ShapeHeader MH;
 		int count = 0;
 		int loop_time = 0;
@@ -347,7 +349,25 @@ namespace PolygonCut
 			}
 		}
 		//绘制多边形（边加粗，内部填充）
-		public void CutAndRebuildPolygons()
+		public void DrawInsePoints(PictureBox pb)
+		{
+			Graphics g = pb.CreateGraphics();
+			//g.Clear(Color.Gray);
+			Pen draw_point = new Pen(Color.Red, 1);
+			Brush brush = new SolidBrush(Color.LightGreen);
+			PointF[] pointsF = new PointF[inse_points.Count];
+			for (int i = 0; i < pointsF.Length; i++)
+			{
+				pointsF[i].X = (float)((inse_points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
+				pointsF[i].Y = (float)(pb.Height - (inse_points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
+				g.DrawEllipse(draw_point, pointsF[i].X, pointsF[i].Y, 5, 5);
+				g.FillEllipse(brush, pointsF[i].X, pointsF[i].Y, 5, 5);
+				//	Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
+			}
+			//g.DrawLines(draw_point, pointsF);
+		}
+		//绘制交点
+		public void CheckLineInPolygonsInse()
 		{
 			bool Inse;
 			Stopwatch stopWatch = new Stopwatch();
@@ -405,6 +425,7 @@ namespace PolygonCut
 									if (Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rare, j);
+										inse_points.Add(CalInsePoint(point1a, point1b, point2a, point2b));
 									}
 									else
 									{
@@ -444,6 +465,7 @@ namespace PolygonCut
 								if (Inse)
 								{
 									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, j);
+									inse_points.Add(CalInsePoint(point1a, point1b, point2a, point2b));
 								}
 								else
 								{
@@ -471,12 +493,13 @@ namespace PolygonCut
 							//多边形rare的检查边与碰撞箱的＼对角线有交点
 							CheckIfInse(p2a, p2b, right_up, left_down)
 							//多边形rare的检查边与碰撞箱的／对角线有交点
-								)
+							)
 						{
 							Inse = CheckIfInse(p1a, p1b, p2a, p2b);
 							if (Inse)
 							{
 								Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rare, polygons[rare].points.Count - 1);
+								inse_points.Add(CalInsePoint(p1a, p1b, p2a, p2b));
 							}
 							else
 							{
@@ -505,7 +528,7 @@ namespace PolygonCut
 			///然后具体检查线段相交
 			///当多边形rare的一条直线不在front内的时候跳过行列式运算，并判定不相交，该直线列入front的黑名单
 		}
-		//检查多边形交点（未完全实现）
+		//检查多边形内直线相交
 		private double Determinant(double v1, double v2, double v3, double v4) 
 		{
 			return (v1 * v3 - v2 * v4);
@@ -532,5 +555,40 @@ namespace PolygonCut
 			return true;
 		}
 		//通过两点坐标判断直线是否相交
+		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
+		{
+			PointF inse_point = new PointF();
+			if (a1.X - a2.X > -(1e-6) && a1.X - a2.X < 1e-6)
+			{
+				inse_point.X = a1.X;
+				inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
+			}
+			//直线A垂直X坐标轴
+			else if (b1.X - b2.X > -(1e-6) && b1.X - b2.X < 1e-6)
+			{
+				inse_point.X = b1.X;
+				inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
+			}
+			//直线B垂直X坐标轴
+			else if (a1.Y - a2.Y > -(1e-6) && a1.Y - a2.Y < 1e-6)
+			{
+				inse_point.Y = a1.Y;
+				inse_point.X = (a1.Y - b1.Y) / (b1.Y - b2.Y) * (b1.X - b2.X) + b1.Y;
+			}
+			//直线A平行X坐标轴，大概是废话
+			else if (b1.Y - b2.Y > -(1e-6) && b1.Y - b2.Y < 1e-6)
+			{
+				inse_point.Y = b1.Y;
+				inse_point.X = (b1.Y - a1.Y) / (a1.Y - a2.Y) * (a1.X - a2.X) + a1.Y;
+			}
+			//直线B平行X坐标轴，大概是废话
+			else
+			{
+				inse_point.X = ((a1.Y - b1.Y) + (b1.Y - b2.Y) / (b1.X - b2.X) * b1.X - (a1.Y - a2.Y) / (a1.X - a2.X) * a1.X) / ((b1.Y - b2.Y) / (b1.X - b2.X) - (a1.Y - a2.Y) / (a1.X - a2.X));
+				inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
+			}
+			//其他一般情况
+			return inse_point;
+		}
 	}
 }
