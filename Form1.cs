@@ -37,6 +37,7 @@ namespace PolygonCut
 		public string ver;
 		string filename;
 		private int FirstX;
+		public bool is_ascfile_open = false;
 
 		public Form1()
 		{
@@ -52,7 +53,6 @@ namespace PolygonCut
 		public void File_Open_Polygon_Click(object sender, EventArgs e)
 		{
 			Stopwatch stopWatch = new Stopwatch();
-			bool is_ascfile_open = false;
 			while (is_ascfile_open == false)
 			{
 				OpenFileDialog dialog = new OpenFileDialog
@@ -87,16 +87,20 @@ namespace PolygonCut
 			VerString.Text = "运行用时：" + elapsedTime;
 		}
 
-		public void MainPicBox_MouseClick(object sender, MouseEventArgs e)
+		private void MainPicBox_MouseMove(object sender, MouseEventArgs e)
 		{
-			PointF position = new PointF(e.X, e.Y);
-			Console.WriteLine(position.ToString());
-			PolyGons polygons = new PolyGons();
-			polygons.ReadShapeFile(filename);
-			position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
-			position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
-			Console.WriteLine(position.ToString());
-			polygons.IsPointInPolygon(position);
+			if (is_ascfile_open)
+			{
+				PointF position = new PointF(e.X, e.Y);
+				//Console.WriteLine(position.ToString());
+				PolyGons polygons = new PolyGons();
+				polygons.ReadShapeFile(filename);
+				position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
+				position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
+				//Console.WriteLine(position.ToString());
+				polygons.IsPointInPolygon(position);
+				VerString.Text = "当前鼠标点位(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形：" + polygons.inname + "内";
+			}
 		}
 	}
 
@@ -205,6 +209,7 @@ namespace PolygonCut
 		public List<PolyGon> polygons;//由多个面构成的面组
 		public List<PointF> inse_points = new List<PointF>();
 		public ShapeHeader MH;
+		public string inname = "";
 		int count = 0;
 		int loop_time = 0;
 		int check_time = 0;
@@ -704,6 +709,7 @@ namespace PolygonCut
 				ispointinpolygon = c;
 				if (ispointinpolygon)
 				{
+					inname += "ID=" + poly.id.ToString() + " ";
 					Console.WriteLine("该点在多边形{0}内", poly.id);
 				}
 			}
