@@ -149,7 +149,7 @@ namespace PolygonCut
 		}
 		//默认构造函数，内含前一顶点ID以及后一顶点ID，以及构造时的初始ID
 	}
-	//定义类Vertex（顶点）
+	//定义类Vertex(顶点)
 
 /*	class BasicLine
 	{
@@ -332,8 +332,8 @@ namespace PolygonCut
 				}
 				g.DrawLines(penDrawLine, pointsF);
 				//绘制多边形面
-
-				EdgeInfo[] edgelist = new EdgeInfo[65536];
+				/*
+				List<EdgeInfo> edgelist = new List<EdgeInfo>();
 				int j = 0, yu = 0, yd = 1024;
 				for(int i = 0; i < pointsF.Length - 1; i++)
 				{
@@ -382,10 +382,11 @@ namespace PolygonCut
 						}
 					}
 				}
+				*/
 				//扫描线填充
 			}
 		}
-		//绘制多边形（边加粗，内部填充）
+		//绘制多边形(边加粗，内部填充)
 		public void DrawInsePoints(PictureBox pb)
 		{
 			Graphics g = pb.CreateGraphics();
@@ -398,7 +399,7 @@ namespace PolygonCut
 				pointsF[i].Y = (float)(pb.Height - (inse_points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
 				g.DrawEllipse(draw_point, pointsF[i].X - 5, pointsF[i].Y - 5, 9, 9);
 				g.FillEllipse(brush, pointsF[i].X - 5, pointsF[i].Y - 5, 9, 9);
-				//	Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
+				Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
 			}
 			Console.WriteLine("共绘制了{0}个交点", inse_points.Count);
 		}
@@ -474,7 +475,7 @@ namespace PolygonCut
 								}
 							}
 						}
-						//检查所有其它边（不包括最后一条边）
+						//检查所有其它边(不包括最后一条边)
 						for(int j = 0; j < polygons[rear].points.Count - 1; j++)
 						{
 							loop_time++;
@@ -552,11 +553,24 @@ namespace PolygonCut
 			//多边形之间检查
 			Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
 			///每次检查两个多边形
-			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过（节省大部分时间）
+			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过(节省大部分时间)
 			///然后具体检查线段相交
 			///当多边形rear的一条线段不在front内的时候跳过行列式运算，并判定不相交，该线段列入front的黑名单
 		}
-		//检查多边形内线段相交
+		///检查多边形内线段相交
+		///1.每次检查两个多边形，分别标记为front和rear。
+		///第一层循环front从第一个多边形遍历到倒数第二个多边形，
+		///第二层循环rear从front+1开始遍历到最后一个多边形。
+		///2.第二层循环体内，首先对两个多边形的外接矩形框（下称碰撞箱）进行检查，
+		///假如二者外接矩形框相交（下称碰撞箱发生碰撞），则初步判断二者可能存在相交点，
+		///而碰撞箱未发生碰撞的情况直接跳过检查，并判定不相交。
+		///3.在两多边形碰撞箱碰撞的前提下，进行逐边检查。第三层循环遍历多边形front的每一条边，
+		///检查边记为i，第四层循环遍历多边形rear的每一条边，检查边记为j。
+		///a)首先检查rear的边j是否与多边形front的碰撞箱发生碰撞，检查方法：分别判断边j的两点坐
+		///标是否在碰撞箱内，假如有一点在碰撞箱内则该边j与多边形front的碰撞箱发生了碰撞。
+		///b)而当两点均不在碰撞箱内时再判断该边j是否与碰撞箱任意一条对角线有交点，如果有交点则
+		///边j与碰撞箱有碰撞，具体检查边i与边j是否相交。而当边j两点均不在碰撞箱内且边j与碰撞箱
+		///对角线无交点时，判定边j与多边形front任意边均无交点，后续检查跳过。
 		private bool CheckIfInse(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			check_time++;
@@ -565,19 +579,34 @@ namespace PolygonCut
 			{
 				return false;
 			}
+			///1.将两线段转换为向量(a2-a1),(b2-b1)，两向量叉乘结果记为delta。
+			///若delta为0，说明线段平行或者共直线。具体判别共直线的情况，两线段
+			///分别任取一点构成一条新的直线，若新直线的斜率等于旧直线斜率则共线，
+			///特别的当两条直线都垂直X坐标轴斜率不存在时则判别两直线的X值是否相等
+			///即可。delta大于零，向量2在向量1的逆时针方向，小于零在顺时针方向。
 			double lamda = Determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
 			if(lamda > 1 || lamda < 0)
 			{
 				return false;
 			}
+			///2.再求向量(b2 - b1)和(a1 - b1)的叉乘以及向量(a2 - a1)和(a1 - b1)
+			///的叉乘，所得结果分别除delta得(a1 - b1)/(a2 - a1)和(a1 - b1)/(a2 - b1)，
+			///分别记为lamda和myu。若lamda小于0则说明向量1在向量2的某时针方向，而向量(a1 - b1)也在向量2的某时针方向，
+			///即向量1与向量(a1 - b1)在向量2同侧，此时两线段不可能有交点，判false。
+			///当lamda大于0时说明向量1与向量(a1 - b1)在向量2异侧，线段可能有交点。
+			///当lamda大于1时，(a1 - b1)长度大于(a2 - a1)长度乘向量2与向量1夹角正弦值，
+			///这时线段也无交点。当lamda小于等于1大于0时才可能有交点。
 			double myu = Determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
 			if(myu > 1 || myu < 0)
 			{
 				return false;
 			}
+			///3.当myu小于零时说明向量(a1-b1)与(b2-b1)在向量1的不同侧，此时不可能有交点。
+			///当大于0时，如果myu大于1，情况与上面类似，无交点。myu大于0小于等于1时可能有交点。
 			return true;
+			///综上所述，两线段有交点（不考虑共直线情况）需同时满足以下条件，delta不等于0，lamda和myu都在区间(0,1]内
 		}
-		//通过两点坐标判断线段是否相交
+		///通过两点坐标判断线段是否相交
 		private static double Determinant(double v1, double v2, double v3, double v4)
 		{
 			return (v1 * v3 - v2 * v4);
@@ -589,36 +618,36 @@ namespace PolygonCut
 		private void CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			PointF inse_point = new PointF();
-			if(a1.X - a2.X > -(1e-6) && a1.X - a2.X < 1e-6)
+			if(Math.Abs(a1.X - a2.X) <= 1e-6)
 				{
 					inse_point.X = a1.X;
 					inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
 				}
-			//线段A垂直X坐标轴（加法 4，乘法 2）
-			else if(b1.X - b2.X > -(1e-6) && b1.X - b2.X < 1e-6)
+			//线段A垂直X坐标轴(加法 4，乘法 2)
+			else if(Math.Abs(b1.X - b2.X) <= 1e-6)
 				{
 					inse_point.X = b1.X;
 					inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 				}
-			//线段B垂直X坐标轴（加法 4，乘法 2）
-			else if(a1.Y - a2.Y > -(1e-6) && a1.Y - a2.Y < 1e-6)
+			//线段B垂直X坐标轴(加法 4，乘法 2)
+			else if(Math.Abs(a1.Y - a2.Y) <= 1e-6)
 				{
 					inse_point.Y = a1.Y;
 					inse_point.X = (a1.Y - b1.Y) / (b1.Y - b2.Y) * (b1.X - b2.X) + b1.Y;
 				}
-			//线段A平行X坐标轴（加法 4，乘法 2）
-			else if(b1.Y - b2.Y > -(1e-6) && b1.Y - b2.Y < 1e-6)
+			//线段A平行X坐标轴(加法 4，乘法 2)
+			else if(Math.Abs(b1.Y - b2.Y) <= 1e-6)
 				{
 					inse_point.Y = b1.Y;
 					inse_point.X = (b1.Y - a1.Y) / (a1.Y - a2.Y) * (a1.X - a2.X) + a1.Y;
 				}
-			//线段B平行X坐标轴（加法 4，乘法 2）
+			//线段B平行X坐标轴(加法 4，乘法 2)
 			else
 				{
 					inse_point.X = ((a1.Y - b1.Y) + (b1.Y - b2.Y) / (b1.X - b2.X) * b1.X - (a1.Y - a2.Y) / (a1.X - a2.X) * a1.X) / ((b1.Y - b2.Y) / (b1.X - b2.X) - (a1.Y - a2.Y) / (a1.X - a2.X));
 					inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 				}
-			//其他一般情况（加法 16，乘法 8）
+			//其他一般情况(加法 16，乘法 8)
 			if(Math.Abs(inse_point.X - a1.X) <= 1e-6 && Math.Abs(inse_point.Y - a1.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - a2.X) <= 1e-6 && Math.Abs(inse_point.Y - a2.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - b1.X) <= 1e-6 && Math.Abs(inse_point.Y - b1.Y) <= 1e-6 ||
@@ -633,10 +662,32 @@ namespace PolygonCut
 				inse_points.Add(inse_point);
 				//非端点时加一点
 			}
-			//Console.WriteLine("inse_points：{0}", inse_points.Count);
+			Console.WriteLine(inse_point.X + " " + inse_point.Y);
 		}
 		///计算交点坐标
 		///通过线段两点式方程联立确定交点坐标
 		///对平行或垂直X坐标轴的线段进行特殊检查
+		private bool IsPointInLine(PointF pt, PolyGon poly)
+		{
+			bool c = false;
+			if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
+			{
+				c = false;//碰撞箱判别失败
+			}
+			else
+			{
+				int i, j, nvert;
+				nvert = poly.points.Count;
+				for (i = 0, j = nvert - 2; i < nvert - 1; j = i++)
+				{
+					if (((poly.points[i].Y > pt.Y) != (poly.points[j].Y > pt.Y)) &&
+						(pt.X < (poly.points[j].X - poly.points[i].X) * (pt.Y - poly.points[i].Y) / (poly.points[j].Y - poly.points[i].Y) + poly.points[i].X))
+						c = !c;
+				}
+			}
+			return c;
+		}
+		///判断点是否在多边形内
+		///参数PointF pt指定点，PolyGon poly指定一个多边形
 	}
 }
