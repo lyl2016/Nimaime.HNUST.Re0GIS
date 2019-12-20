@@ -378,7 +378,7 @@ namespace PolygonCut
 					{
 						if(y < edgelist[i].YMax - 1 && y > edgelist[i].YMin)
 						{
-							edgelist[i].XMin += edgelist[i].K;
+							//edgelist[i].XMin += edgelist[i].K;
 						}
 					}
 				}
