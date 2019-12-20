@@ -35,19 +35,26 @@ namespace PolygonCut
 		///Release			R		发行版
 		///
 		public string ver;
+		string filename;
+		private int FirstX;
 
 		public Form1()
 		{
 			InitializeComponent();
 		}
 
-		private void File_Open_Polygon_Click(object sender, EventArgs e)
+		public void Form1_Load(object sender, EventArgs e)
+		{
+			ver = assName.Version.ToString() + "_" + channel;
+			VerString.Text = "版本号：" + ver;
+		}
+
+		public void File_Open_Polygon_Click(object sender, EventArgs e)
 		{
 			Stopwatch stopWatch = new Stopwatch();
 			bool is_ascfile_open = false;
 			while (is_ascfile_open == false)
 			{
-				string filename;
 				OpenFileDialog dialog = new OpenFileDialog
 				{
 					Multiselect = false,//该值确定是否可以选择多个文件
@@ -80,10 +87,16 @@ namespace PolygonCut
 			VerString.Text = "运行用时：" + elapsedTime;
 		}
 
-		private void Form1_Load(object sender, EventArgs e)
+		public void MainPicBox_MouseClick(object sender, MouseEventArgs e)
 		{
-			ver = assName.Version.ToString() + "_" + channel;
-			VerString.Text = "版本号：" + ver;
+			PointF position = new PointF(e.X, e.Y);
+			Console.WriteLine(position.ToString());
+			PolyGons polygons = new PolyGons();
+			polygons.ReadShapeFile(filename);
+			position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
+			position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
+			Console.WriteLine(position.ToString());
+			polygons.IsPointInPolygon(position);
 		}
 	}
 
@@ -188,10 +201,10 @@ namespace PolygonCut
 
 	class PolyGons
 	{
-		public int FirstX;
+		private int FirstX;
 		public List<PolyGon> polygons;//由多个面构成的面组
 		public List<PointF> inse_points = new List<PointF>();
-		ShapeHeader MH;
+		public ShapeHeader MH;
 		int count = 0;
 		int loop_time = 0;
 		int check_time = 0;
@@ -300,8 +313,8 @@ namespace PolygonCut
 			}
 			catch (EndOfStreamException e)
 			{
-				Console.WriteLine(e.ToString());
-				Console.WriteLine("文件读取完毕");				
+				//Console.WriteLine(e.ToString());
+				//Console.WriteLine("文件读取完毕");				
 			}
 		}
 		//读取SHP文件内容
@@ -327,13 +340,13 @@ namespace PolygonCut
 				PointF[] pointsF = new PointF[pg.points.Count];
 				for(int i = 0; i < pointsF.Length; i++)
 				{
-					pointsF[i].X = (float)((pg.points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
-					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
+					pointsF[i].X = (float)((pg.points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width);
+					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height);
 				}
 				g.DrawLines(penDrawLine, pointsF);
 				//绘制多边形面
-				/*
-				List<EdgeInfo> edgelist = new List<EdgeInfo>();
+
+				EdgeInfo[] edgelist = new EdgeInfo[100];
 				int j = 0, yu = 0, yd = 1024;
 				for(int i = 0; i < pointsF.Length - 1; i++)
 				{
@@ -369,8 +382,8 @@ namespace PolygonCut
 						}
 						else
 						{
-							//g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX + 2, y);
-							//g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
+							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX + 2, y);
+							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
 							flag = 0;
 						}
 					}
@@ -378,11 +391,11 @@ namespace PolygonCut
 					{
 						if(y < edgelist[i].YMax - 1 && y > edgelist[i].YMin)
 						{
-							//edgelist[i].XMin += edgelist[i].K;
+							edgelist[i].XMin += edgelist[i].K;
 						}
 					}
 				}
-				*/
+				
 				//扫描线填充
 			}
 		}
@@ -395,11 +408,11 @@ namespace PolygonCut
 			PointF[] pointsF = new PointF[inse_points.Count];
 			for(int i = 0; i < pointsF.Length; i++)
 			{
-				pointsF[i].X = (float)((inse_points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width * 3.0 / 4.0 + 1.0 / 8.0 * pb.Width);
-				pointsF[i].Y = (float)(pb.Height - (inse_points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height * 3.0 / 4.0 - 1.0 / 8.0 * pb.Height);
+				pointsF[i].X = (float)((inse_points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width);
+				pointsF[i].Y = (float)(pb.Height - (inse_points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height);
 				g.DrawEllipse(draw_point, pointsF[i].X - 5, pointsF[i].Y - 5, 9, 9);
 				g.FillEllipse(brush, pointsF[i].X - 5, pointsF[i].Y - 5, 9, 9);
-				Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
+				//Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
 			}
 			Console.WriteLine("共绘制了{0}个交点", inse_points.Count);
 		}
@@ -662,30 +675,38 @@ namespace PolygonCut
 				inse_points.Add(inse_point);
 				//非端点时加一点
 			}
-			Console.WriteLine(inse_point.X + " " + inse_point.Y);
+			Console.WriteLine(inse_point.ToString());
 		}
 		///计算交点坐标
 		///通过线段两点式方程联立确定交点坐标
 		///对平行或垂直X坐标轴的线段进行特殊检查
-		private bool IsPointInLine(PointF pt, PolyGon poly)
+		public void IsPointInPolygon(PointF pt)
 		{
+			bool ispointinpolygon = false;
 			bool c = false;
-			if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
+			foreach(PolyGon poly in polygons)
 			{
-				c = false;//碰撞箱判别失败
-			}
-			else
-			{
-				int i, j, nvert;
-				nvert = poly.points.Count;
-				for (i = 0, j = nvert - 2; i < nvert - 1; j = i++)
+				if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
 				{
-					if (((poly.points[i].Y > pt.Y) != (poly.points[j].Y > pt.Y)) &&
-						(pt.X < (poly.points[j].X - poly.points[i].X) * (pt.Y - poly.points[i].Y) / (poly.points[j].Y - poly.points[i].Y) + poly.points[i].X))
-						c = !c;
+					c = false;//碰撞箱判别失败
+				}
+				else
+				{
+					int i, j, nvert;
+					nvert = poly.points.Count;
+					for (i = 0, j = nvert - 2; i < nvert - 1; j = i++)
+					{
+						if (((poly.points[i].Y > pt.Y) != (poly.points[j].Y > pt.Y)) &&
+							(pt.X < (poly.points[j].X - poly.points[i].X) * (pt.Y - poly.points[i].Y) / (poly.points[j].Y - poly.points[i].Y) + poly.points[i].X))
+							c = !c;
+					}
+				}
+				ispointinpolygon = c;
+				if (ispointinpolygon)
+				{
+					Console.WriteLine("该点在多边形{0}内", poly.id);
 				}
 			}
-			return c;
 		}
 		///判断点是否在多边形内
 		///参数PointF pt指定点，PolyGon poly指定一个多边形

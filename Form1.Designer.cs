@@ -49,6 +49,7 @@
 			this.MainPicBox.Size = new System.Drawing.Size(1238, 630);
 			this.MainPicBox.TabIndex = 1;
 			this.MainPicBox.TabStop = false;
+			this.MainPicBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainPicBox_MouseClick);
 			// 
 			// menuStrip1
 			// 
@@ -67,7 +68,7 @@
             this.File_Open,
             this.File_Save});
 			this.File.Name = "File";
-			this.File.Size = new System.Drawing.Size(51, 24);
+			this.File.Size = new System.Drawing.Size(53, 24);
 			this.File.Text = "文件";
 			// 
 			// File_Open
@@ -75,20 +76,20 @@
 			this.File_Open.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.File_Open_Polygon});
 			this.File_Open.Name = "File_Open";
-			this.File_Open.Size = new System.Drawing.Size(216, 26);
+			this.File_Open.Size = new System.Drawing.Size(122, 26);
 			this.File_Open.Text = "打开";
 			// 
 			// File_Open_Polygon
 			// 
 			this.File_Open_Polygon.Name = "File_Open_Polygon";
-			this.File_Open_Polygon.Size = new System.Drawing.Size(216, 26);
+			this.File_Open_Polygon.Size = new System.Drawing.Size(137, 26);
 			this.File_Open_Polygon.Text = "多边形";
 			this.File_Open_Polygon.Click += new System.EventHandler(this.File_Open_Polygon_Click);
 			// 
 			// File_Save
 			// 
 			this.File_Save.Name = "File_Save";
-			this.File_Save.Size = new System.Drawing.Size(216, 26);
+			this.File_Save.Size = new System.Drawing.Size(122, 26);
 			this.File_Save.Text = "保存";
 			// 
 			// VerString
