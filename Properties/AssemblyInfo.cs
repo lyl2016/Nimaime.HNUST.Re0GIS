@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("多边形裁切")]
+[assembly: AssemblyTitle("从零开始的GIS生活")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("多边形裁切")]
+[assembly: AssemblyProduct("飞翔羽翼")]
 [assembly: AssemblyCopyright("Copyright 二枚目 ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -31,7 +31,7 @@ using System.Runtime.InteropServices;
 //
 //可以指定所有这些值，也可以使用“生成号”和“修订号”的默认值
 //通过使用 "*"，如下所示:
-// [assembly: AssemblyVersion("1.0.*")]
+//[assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.2.66.1219")]
-[assembly: AssemblyFileVersion("0.2.66.1219")]
+[assembly: AssemblyVersion("0.2.66.*")]
+[assembly: AssemblyFileVersion("0.2.66")]
