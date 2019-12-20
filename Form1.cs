@@ -38,6 +38,7 @@ namespace PolygonCut
 		string filename;
 		private int FirstX;
 		public bool is_ascfile_open = false;
+		PolyGons polygons;
 
 		public Form1()
 		{
@@ -52,6 +53,7 @@ namespace PolygonCut
 
 		public void File_Open_Polygon_Click(object sender, EventArgs e)
 		{
+			is_ascfile_open = false;
 			Stopwatch stopWatch = new Stopwatch();
 			while (is_ascfile_open == false)
 			{
@@ -65,7 +67,7 @@ namespace PolygonCut
 				{
 					filename = dialog.FileName;
 					is_ascfile_open = true;
-					PolyGons polygons = new PolyGons();
+					polygons = new PolyGons();
 					polygons.ReadShapeFile(filename);
 					polygons.DrawPolyGons(MainPicBox);
 					stopWatch.Start();
@@ -92,14 +94,10 @@ namespace PolygonCut
 			if (is_ascfile_open)
 			{
 				PointF position = new PointF(e.X, e.Y);
-				//Console.WriteLine(position.ToString());
-				PolyGons polygons = new PolyGons();
-				polygons.ReadShapeFile(filename);
 				position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
 				position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
-				//Console.WriteLine(position.ToString());
 				polygons.IsPointInPolygon(position);
-				VerString.Text = "当前鼠标点位(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形：" + polygons.inname + "内";
+				inname.Text = "当前鼠标点位(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形：" + polygons.inname + "内";
 			}
 		}
 	}
@@ -651,13 +649,13 @@ namespace PolygonCut
 			else if(Math.Abs(a1.Y - a2.Y) <= 1e-6)
 				{
 					inse_point.Y = a1.Y;
-					inse_point.X = (a1.Y - b1.Y) / (b1.Y - b2.Y) * (b1.X - b2.X) + b1.Y;
+					inse_point.X = (a1.Y - b1.Y) / (b2.Y - b1.Y) * (b2.X - b1.X) + b1.X;
 				}
 			//线段A平行X坐标轴(加法 4，乘法 2)
 			else if(Math.Abs(b1.Y - b2.Y) <= 1e-6)
 				{
 					inse_point.Y = b1.Y;
-					inse_point.X = (b1.Y - a1.Y) / (a1.Y - a2.Y) * (a1.X - a2.X) + a1.Y;
+					inse_point.X = (b1.Y - a1.Y) / (a2.Y - a1.Y) * (a2.X - a1.X) + a1.X;
 				}
 			//线段B平行X坐标轴(加法 4，乘法 2)
 			else
@@ -687,6 +685,7 @@ namespace PolygonCut
 		///对平行或垂直X坐标轴的线段进行特殊检查
 		public void IsPointInPolygon(PointF pt)
 		{
+			inname = "";
 			bool ispointinpolygon = false;
 			bool c = false;
 			foreach(PolyGon poly in polygons)

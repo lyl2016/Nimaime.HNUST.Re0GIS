@@ -35,6 +35,7 @@
 			this.File_Open_Polygon = new System.Windows.Forms.ToolStripMenuItem();
 			this.File_Save = new System.Windows.Forms.ToolStripMenuItem();
 			this.VerString = new System.Windows.Forms.Label();
+			this.inname = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).BeginInit();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
@@ -58,7 +59,7 @@
             this.File});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1262, 28);
+			this.menuStrip1.Size = new System.Drawing.Size(1262, 30);
 			this.menuStrip1.TabIndex = 2;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -68,7 +69,7 @@
             this.File_Open,
             this.File_Save});
 			this.File.Name = "File";
-			this.File.Size = new System.Drawing.Size(53, 24);
+			this.File.Size = new System.Drawing.Size(53, 26);
 			this.File.Text = "文件";
 			// 
 			// File_Open
@@ -104,11 +105,24 @@
 			this.VerString.TabIndex = 3;
 			this.VerString.Text = "版本号：AA.BB.CCCC.DDDDD E";
 			// 
+			// inname
+			// 
+			this.inname.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.inname.AutoSize = true;
+			this.inname.Font = new System.Drawing.Font("宋体", 16F, System.Drawing.FontStyle.Bold);
+			this.inname.Location = new System.Drawing.Point(12, 601);
+			this.inname.Margin = new System.Windows.Forms.Padding(3);
+			this.inname.Name = "inname";
+			this.inname.Size = new System.Drawing.Size(423, 27);
+			this.inname.TabIndex = 4;
+			this.inname.Text = "当前鼠标点位( , )在多边形：内";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1262, 673);
+			this.Controls.Add(this.inname);
 			this.Controls.Add(this.VerString);
 			this.Controls.Add(this.MainPicBox);
 			this.Controls.Add(this.menuStrip1);
@@ -132,6 +146,7 @@
 		private System.Windows.Forms.ToolStripMenuItem File_Open_Polygon;
 		private System.Windows.Forms.ToolStripMenuItem File_Save;
 		private System.Windows.Forms.Label VerString;
+		private System.Windows.Forms.Label inname;
 	}
 }
 
