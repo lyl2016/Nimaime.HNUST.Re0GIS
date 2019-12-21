@@ -1383,77 +1383,7 @@ namespace Re0GIS
 								}
 							}
 						}
-						//检查所有其它边(不包括最后一条边)
-						for(int j = 0; j < polygons[rear].points.Count - 1; j++)
-						{
-							loop_time++;
-							//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rear, j);
-							PointF point1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
-							PointF point1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
-							PointF point2a = new PointF((float)polygons[rear].points[j].X, (float)polygons[rear].points[j].Y);
-							PointF point2b = new PointF((float)polygons[rear].points[j + 1].X, (float)polygons[rear].points[j + 1].Y);
-							if((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
-								point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
-								//多边形rear的检查边点A在碰撞箱内
-								(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
-								point2b.Y > polygons[front].ymin && point2b.Y < polygons[front].ymax) ||
-								//多边形rear的检查边点B在碰撞箱内
-								CheckIfInse(point2a, point2b, left_up, right_down) ||
-								//多边形rear的检查边与碰撞箱的＼对角线有交点
-								CheckIfInse(point2a, point2b, right_up, left_down)
-								//多边形rear的检查边与碰撞箱的／对角线有交点
-								)
-							{
-								Inse = CheckIfInse(point1a, point1b, point2a, point2b);
-								if(Inse)
-								{
-									//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rear, j);
-									CalInsePoint(point1a, point1b, point2a, point2b);
-								}
-								else
-								{
-									//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rear, j);
-								}
-							}
-							else
-							{
-								//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rear, j);
-							}
-						}
-						//检查front的最后一边与rear的其它边
-						//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, polygons[front].points.Count - 1, rear, polygons[rear].points.Count - 1);
-						PointF p1a = new PointF((float)polygons[front].points[polygons[front].points.Count - 1].X, (float)polygons[front].points[0].Y);
-						PointF p1b = new PointF((float)polygons[front].points[0].X, (float)polygons[front].points[0].Y);
-						PointF p2a = new PointF((float)polygons[rear].points[polygons[rear].points.Count - 1].X, (float)polygons[rear].points[polygons[rear].points.Count - 1].Y);
-						PointF p2b = new PointF((float)polygons[rear].points[0].X, (float)polygons[rear].points[0].Y);
-						if(p2a.X > polygons[front].xmin && p2a.X < polygons[front].xmax &&
-							p2a.Y > polygons[front].ymin && p2a.Y < polygons[front].ymax ||
-							//多边形rear的检查边点A在碰撞箱内
-							p2b.X > polygons[front].xmin && p2b.X < polygons[front].xmax &&
-							p2b.Y > polygons[front].ymin && p2b.Y < polygons[front].ymax ||
-							//多边形rear的检查边点B在碰撞箱内
-							CheckIfInse(p2a, p2b, left_up, right_down) ||
-							//多边形rear的检查边与碰撞箱的＼对角线有交点
-							CheckIfInse(p2a, p2b, right_up, left_down)
-							//多边形rear的检查边与碰撞箱的／对角线有交点
-							)
-						{
-							Inse = CheckIfInse(p1a, p1b, p2a, p2b);
-							if(Inse)
-							{
-								//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, polygons[front].points.Count - 1, rear, polygons[rear].points.Count - 1);
-								CalInsePoint(p1a, p1b, p2a, p2b);
-							}
-							else
-							{
-								//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rear, polygons[rear].points.Count - 1);
-							}
-						}
-						else
-						{
-							//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, polygons[front].points.Count - 1, rear, polygons[rear].points.Count - 1);
-						}
-						//单独检查两个面的最后一条边是否相交
+						//检查所有边
 					}
 					//碰撞箱检查得交，检查线交点
 				}
