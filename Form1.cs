@@ -34,11 +34,11 @@ namespace PolygonCut
 		///Demo				D		演示版
 		///Release			R		发行版
 		///
-		public string ver;
-		string filename;
-		private int FirstX;
-		public bool is_ascfile_open = false;
-		PolyGons polygons;
+		public string ver;//标记版本号
+		string filename;//标记SHP文件路径
+		private int FirstX;//用于扫描线填充【待实现】
+		public bool is_ascfile_open = false;//判断文件是否打开
+		PolyGons polygons;//用于Form1内调用
 
 		public Form1()
 		{
@@ -55,7 +55,7 @@ namespace PolygonCut
 		{
 			is_ascfile_open = false;
 			Stopwatch stopWatch = new Stopwatch();
-			while (is_ascfile_open == false)
+			if (is_ascfile_open == false)
 			{
 				OpenFileDialog dialog = new OpenFileDialog
 				{
@@ -74,6 +74,12 @@ namespace PolygonCut
 					polygons.CheckLineInPolygonsInse();
 					stopWatch.Stop();
 					polygons.DrawInsePoints(MainPicBox);
+					// Get the elapsed time as a TimeSpan value.
+					TimeSpan ts = stopWatch.Elapsed;
+					// Format and display the TimeSpan value.
+					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+					Console.WriteLine("运行用时：" + elapsedTime);
+					VerString.Text = "运行用时：" + elapsedTime;
 				}
 				else
 				{
@@ -81,12 +87,6 @@ namespace PolygonCut
 					is_ascfile_open = false;
 				}
 			}
-			// Get the elapsed time as a TimeSpan value.
-			TimeSpan ts = stopWatch.Elapsed;
-			// Format and display the TimeSpan value.
-			string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-			Console.WriteLine("运行用时：" + elapsedTime);
-			VerString.Text = "运行用时：" + elapsedTime;
 		}
 
 		private void MainPicBox_MouseMove(object sender, MouseEventArgs e)
@@ -687,9 +687,9 @@ namespace PolygonCut
 		{
 			inname = "";
 			bool ispointinpolygon = false;
-			bool c = false;
 			foreach(PolyGon poly in polygons)
 			{
+				bool c = false;
 				if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
 				{
 					c = false;//碰撞箱判别失败
