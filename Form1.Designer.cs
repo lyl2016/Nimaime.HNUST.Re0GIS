@@ -113,9 +113,9 @@
 			this.inname.Location = new System.Drawing.Point(12, 601);
 			this.inname.Margin = new System.Windows.Forms.Padding(3);
 			this.inname.Name = "inname";
-			this.inname.Size = new System.Drawing.Size(423, 27);
+			this.inname.Size = new System.Drawing.Size(0, 27);
 			this.inname.TabIndex = 4;
-			this.inname.Text = "当前鼠标点位( , )在多边形：内";
+			this.inname.Click += new System.EventHandler(this.inname_Click);
 			// 
 			// Form1
 			// 

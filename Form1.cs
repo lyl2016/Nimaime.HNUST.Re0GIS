@@ -12,20 +12,26 @@ namespace PolygonCut
 {
 	/// <summary>
 	/// 注释名词统一
-	/// 碰撞箱：线段、多边形的矩形范围框
+	/// 碰撞箱				线段、多边形的矩形范围框
+	/// Boxing				The outer rectangle frame of a polyline or polygons
+	/// inse				intersect 相交
+	/// inname				IDs of the polygon in which the point is
 	/// 
 	/// 英文译名统一
+	/// vertex				顶点
 	/// points				点集
 	/// polyline			折线
 	/// polygon				多边形
 	/// rectangle			矩形
 	/// header				文件标头
-	/// inse = intersect	相交
+	/// 
 	/// </summary>
 	public partial class Form1 : Form
 	{
 		AssemblyName assName = Assembly.GetExecutingAssembly().GetName();
-		readonly string channel = "A";
+		public string ver;//标记版本号
+						  //版本号格式：主版本号.子版本号[.编译版本号[.修正版本号]]
+		const string channel = "A";
 		///预计会使用到的通道
 		///Channel			Cname
 		///Early Preview	E		早期测试版
@@ -34,11 +40,11 @@ namespace PolygonCut
 		///Demo				D		演示版
 		///Release			R		发行版
 		///
-		public string ver;//标记版本号
 		string filename;//标记SHP文件路径
 		private int FirstX;//用于扫描线填充【待实现】
 		public bool is_ascfile_open = false;//判断文件是否打开
 		PolyGons polygons;//用于Form1内调用
+		public bool inname_form = true;
 
 		public Form1()
 		{
@@ -97,12 +103,20 @@ namespace PolygonCut
 				position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
 				position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
 				polygons.IsPointInPolygon(position);
-				inname.Text = "当前鼠标点位(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形：" + polygons.inname + "内";
+				if(inname_form)
+					inname.Text = "屏幕坐标(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形ID：" + polygons.inname + "内，点击文字切换坐标";
+				else
+					inname.Text = "地图坐标(" + position.X.ToString() + "," + position.Y.ToString() + ")在多边形ID：" + polygons.inname + "内，点击文字切换坐标";
 			}
+		}
+
+		private void inname_Click(object sender, EventArgs e)
+		{
+			inname_form = !inname_form;
 		}
 	}
 
-	public struct EdgeInfo
+	struct EdgeInfo
 	{
 		int ymax, ymin;//Y的上下端点
 		float k, xmin;//斜率倒数和X的下端点
@@ -115,7 +129,8 @@ namespace PolygonCut
 			ymax = y2; ymin = y1; xmin = (float)x1; k = (float)(x1 - x2) / (float)(y1 - y2);
 		}
 	}
-	//扫描线填充算法预定义结构
+	///扫描线填充算法预定义结构
+	///Pre-define the structure which is using in the scanline fill
 
 	struct ShapeHeader
 	{
@@ -139,14 +154,16 @@ namespace PolygonCut
 		public double MMin;
 		public double MMax;
 	}
-	//Shapefile文件标头结构
+	///Shapefile文件标头结构
+	///Using for the SHP file header
 
 	struct CheckPoint
 	{
 		public int Pre;
 		public int Next;
 	}
-	//前后检查点结构
+	///前后检查点结构
+	///Using to define the front and rear point of a check point
 
 	class Vertex
 	{
@@ -208,6 +225,8 @@ namespace PolygonCut
 		public List<PointF> inse_points = new List<PointF>();
 		public ShapeHeader MH;
 		public string inname = "";
+		///用来存放IsPointInPolygon函数的数据
+		///Using for storage the data made by the method IsPointInPolygon
 		int count = 0;
 		int loop_time = 0;
 		int check_time = 0;
@@ -226,7 +245,10 @@ namespace PolygonCut
 		{
 			return (value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 | (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24;
 		}
-		//高低字节转序
+		///高低字节转序
+		///该函数用于在读取SHP文件时对高字节序部分进行转序
+		///参数为一个无符号的32位整形值，假设字节内容为ABCD
+		///返回值即为DCBA
 		public void ReadShapeFile(string filePath)
 		{
 			FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -320,7 +342,8 @@ namespace PolygonCut
 				//Console.WriteLine("文件读取完毕");				
 			}
 		}
-		//读取SHP文件内容
+		///读取SHP文件内容
+		///Read the contents in a shapefile
 		public void DrawPolyGons(PictureBox pb)
 		{
 			Graphics g = pb.CreateGraphics();
@@ -338,8 +361,8 @@ namespace PolygonCut
 				B = (B > 255) ? 255 : B;
 				//生成随机颜色
 
-				Pen penDrawLine = new Pen(Color.Red, 2);
-				Pen penDrawPolygon = new Pen(Color.FromArgb(R, G, B), 2);
+				Pen penDrawLine = new Pen(Color.Red, 3);
+				Pen penDrawPolygon = new Pen(Color.FromArgb(R, G, B), 1);
 				PointF[] pointsF = new PointF[pg.points.Count];
 				for(int i = 0; i < pointsF.Length; i++)
 				{
@@ -385,7 +408,7 @@ namespace PolygonCut
 						}
 						else
 						{
-							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX + 2, y);
+							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
 							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
 							flag = 0;
 						}
@@ -623,6 +646,8 @@ namespace PolygonCut
 			///综上所述，两线段有交点（不考虑共直线情况）需同时满足以下条件，delta不等于0，lamda和myu都在区间(0,1]内
 		}
 		///通过两点坐标判断线段是否相交
+		///参数a1, a2, b1, b2分别为线段A, B的两端点
+		///返回值false不相交，true相交
 		private static double Determinant(double v1, double v2, double v3, double v4)
 		{
 			return (v1 * v3 - v2 * v4);
@@ -686,14 +711,14 @@ namespace PolygonCut
 		public void IsPointInPolygon(PointF pt)
 		{
 			inname = "";
-			bool ispointinpolygon = false;
 			foreach(PolyGon poly in polygons)
 			{
-				bool c = false;
+				bool c = false;//初始置否
 				if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
 				{
-					c = false;//碰撞箱判别失败
+					c = false;
 				}
+				//碰撞箱判别
 				else
 				{
 					int i, j, nvert;
@@ -705,11 +730,11 @@ namespace PolygonCut
 							c = !c;
 					}
 				}
-				ispointinpolygon = c;
-				if (ispointinpolygon)
+				//扫描线交多边形偶数次则点在多边形内，否则点在多边形外
+				if (c)
 				{
-					inname += "ID=" + poly.id.ToString() + " ";
-					Console.WriteLine("该点在多边形{0}内", poly.id);
+					inname += poly.id.ToString() + " ";
+					//Console.WriteLine("该点在多边形{0}内", poly.id);
 				}
 			}
 		}

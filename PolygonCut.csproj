@@ -138,7 +138,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>D:\LYLUs\Desktop\versionc.exe "$(ProjectDir)Properties\AssemblyInfo.cs" "\[assembly: AssemblyVersion\(\"\d+\.\d+\.(\d+)" 1 Debug $(ConfigurationName)</PreBuildEvent>
   </PropertyGroup>
 </Project>
