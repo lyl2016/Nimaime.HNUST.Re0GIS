@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace PolygonCut.Properties {
+namespace Re0GIS.Properties {
     using System;
     
     

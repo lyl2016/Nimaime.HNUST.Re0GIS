@@ -8,14 +8,11 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace PolygonCut
+namespace Re0GIS
 {
 	/// <summary>
 	/// 注释名词统一
 	/// 碰撞箱				线段、多边形的矩形范围框
-	/// Boxing				The outer rectangle frame of a polyline or polygons
-	/// inse				intersect 相交
-	/// inname				IDs of the polygon in which the point is
 	/// 
 	/// 英文译名统一
 	/// vertex				顶点
@@ -24,13 +21,19 @@ namespace PolygonCut
 	/// polygon				多边形
 	/// rectangle			矩形
 	/// header				文件标头
-	/// 
+	/// inse				intersect 相交
+	/// inname				mark the IDs of some polygons that the mouse point is in
 	/// </summary>
 	public partial class Form1 : Form
 	{
+		//====
+		// 版本显示相关
+		//====
 		AssemblyName assName = Assembly.GetExecutingAssembly().GetName();
-		public string ver;//标记版本号
-						  //版本号格式：主版本号.子版本号[.编译版本号[.修正版本号]]
+		public string ver;
+		///标记版本号
+		///版本号格式：主版本号.子版本号[.编译版本号[.修正版本号]]
+		///this string may be using in various ways
 		const string channel = "A";
 		///预计会使用到的通道
 		///Channel			Cname
@@ -40,28 +43,34 @@ namespace PolygonCut
 		///Demo				D		演示版
 		///Release			R		发行版
 		///
-		string filename;//标记SHP文件路径
+
+		string filepath_polyline;//represent a path of a polyline shapefile
+		string filepath_polygon;//represent a path of a polygon shapefile
 		private int FirstX;//用于扫描线填充【待实现】
-		public bool is_ascfile_open = false;//判断文件是否打开
+		public bool is_polylineshp_open = false;//mark the status that a polyline file open
+		public bool is_polygonshp_open = false;//mark the status that a polygon file open
+		PolyLines polylines;//用于Form1内调用
 		PolyGons polygons;//用于Form1内调用
-		public bool inname_form = true;
+		public bool inname_form = true;///mark the method to represent of coordinate system
+		///true for screen coordinate, false for the coordinate of shapefile
 
 		public Form1()
 		{
 			InitializeComponent();
 		}
 
-		public void Form1_Load(object sender, EventArgs e)
+		private void Form1_Load(object sender, EventArgs e)
 		{
 			ver = assName.Version.ToString() + "_" + channel;
 			VerString.Text = "版本号：" + ver;
+			///load the version string while form load
 		}
 
-		public void File_Open_Polygon_Click(object sender, EventArgs e)
+		private void File_Open_PolyLine_Click(object sender, EventArgs e)
 		{
-			is_ascfile_open = false;
+			is_polylineshp_open = false;
 			Stopwatch stopWatch = new Stopwatch();
-			if (is_ascfile_open == false)
+			if (is_polylineshp_open == false)
 			{
 				OpenFileDialog dialog = new OpenFileDialog
 				{
@@ -71,42 +80,118 @@ namespace PolygonCut
 				};
 				if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
 				{
-					filename = dialog.FileName;
-					is_ascfile_open = true;
-					polygons = new PolyGons();
-					polygons.ReadShapeFile(filename);
-					polygons.DrawPolyGons(MainPicBox);
-					stopWatch.Start();
-					polygons.CheckLineInPolygonsInse();
-					stopWatch.Stop();
-					polygons.DrawInsePoints(MainPicBox);
-					// Get the elapsed time as a TimeSpan value.
-					TimeSpan ts = stopWatch.Elapsed;
-					// Format and display the TimeSpan value.
-					string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-					Console.WriteLine("运行用时：" + elapsedTime);
-					VerString.Text = "运行用时：" + elapsedTime;
+					filepath_polyline = dialog.FileName;
+					is_polylineshp_open = true;
+					polylines = new PolyLines();
+					polylines.ReadShapeFile(filepath_polyline);
+					if (polylines.MH.ShapeType == 3)
+					{
+						polylines.DrawPolyLines(MainPicBox);
+						stopWatch.Start();
+						for (int i = 0; i < polylines.polylines.Count; i++)
+						{
+							for (int j = i + 1; j < polylines.polylines.Count; j++)
+							{
+								polylines.CalIntersect(polylines.polylines[i], polylines.polylines[j]);
+							}
+						}
+						stopWatch.Stop();
+						polylines.DrawInterSectPoints(MainPicBox);
+						// Get the elapsed time as a TimeSpan value.
+						TimeSpan ts = stopWatch.Elapsed;
+						// Format and display the TimeSpan value.
+						string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+						Console.WriteLine("运行用时：" + elapsedTime);
+						VerString.Text = "运行用时：" + elapsedTime + "，共绘制了" + polylines.InterSectPoints.Count + "个交点";
+					}
+					else
+					{
+						DialogResult retry_open_polyline = MessageBox.Show("你选择的文件不是折线文件", "请重试", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+					}
 				}
 				else
 				{
-					filename = "";
-					is_ascfile_open = false;
+					filepath_polygon = "";
+					is_polygonshp_open = false;
 				}
 			}
+			is_polygonshp_open = false;
+		}
+
+		private void File_Open_Polygon_Click(object sender, EventArgs e)
+		{
+			is_polygonshp_open = false;
+			Stopwatch stopWatch = new Stopwatch();
+			if (is_polygonshp_open == false)
+			{
+				OpenFileDialog dialog = new OpenFileDialog
+				{
+					Multiselect = false,//该值确定是否可以选择多个文件
+					Title = "请选择Shapefile文件",
+					Filter = "Shapefile文件(*.shp)|*.shp"
+				};
+				if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+				{
+					filepath_polygon = dialog.FileName;
+					is_polygonshp_open = true;
+					polygons = new PolyGons();
+					polygons.ReadShapeFile(filepath_polygon);
+					if(polygons.MH.ShapeType == 5)
+					{
+						polygons.DrawPolyGons(MainPicBox);
+						stopWatch.Start();
+						polygons.CheckLineInPolygonsInse();
+						stopWatch.Stop();
+						polygons.DrawInsePoints(MainPicBox);
+						// Get the elapsed time as a TimeSpan value.
+						TimeSpan ts = stopWatch.Elapsed;
+						// Format and display the TimeSpan value.
+						string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}", ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+						//Console.WriteLine("运行用时：" + elapsedTime);
+						VerString.Text = "运行用时：" + elapsedTime + "，共绘制了" + polygons.inse_points.Count + "个交点";
+					}
+					else
+					{
+						DialogResult retry_open_polygon = MessageBox.Show("你选择的文件不是多边形文件", "请重试", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+					}
+				}
+				else
+				{
+					filepath_polygon = "";
+					is_polygonshp_open = false;
+				}
+			}
+			is_polylineshp_open = false;
 		}
 
 		private void MainPicBox_MouseMove(object sender, MouseEventArgs e)
 		{
-			if (is_ascfile_open)
+			if (is_polylineshp_open)
+			{
+				PointF position = new PointF(e.X, e.Y);
+				position.X = (float)((position.X / MainPicBox.Width) * (polylines.MH.XMax - polylines.MH.XMin) + polylines.MH.XMin);
+				position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polylines.MH.YMax - polylines.MH.YMin) + polylines.MH.YMin);
+				if (inname_form)
+					inname.Text = "屏幕坐标(" + e.X.ToString() + "," + e.Y.ToString() + ")，点击文字切换坐标";
+				else
+					inname.Text = "地图坐标(" + position.X.ToString() + "," + position.Y.ToString() + ")，点击文字切换坐标";
+			}
+
+			else if (is_polygonshp_open)
 			{
 				PointF position = new PointF(e.X, e.Y);
 				position.X = (float)((position.X / MainPicBox.Width) * (polygons.MH.XMax - polygons.MH.XMin) + polygons.MH.XMin);
 				position.Y = (float)((position.Y - MainPicBox.Height) / (-MainPicBox.Height) * (polygons.MH.YMax - polygons.MH.YMin) + polygons.MH.YMin);
 				polygons.IsPointInPolygon(position);
-				if(inname_form)
+				if (inname_form)
 					inname.Text = "屏幕坐标(" + e.X.ToString() + "," + e.Y.ToString() + ")在多边形ID：" + polygons.inname + "内，点击文字切换坐标";
 				else
 					inname.Text = "地图坐标(" + position.X.ToString() + "," + position.Y.ToString() + ")在多边形ID：" + polygons.inname + "内，点击文字切换坐标";
+			}
+
+			else
+			{
+				inname.Text = "屏幕坐标(" + e.X.ToString() + "," + e.Y.ToString() + ")";
 			}
 		}
 
@@ -129,8 +214,7 @@ namespace PolygonCut
 			ymax = y2; ymin = y1; xmin = (float)x1; k = (float)(x1 - x2) / (float)(y1 - y2);
 		}
 	}
-	///扫描线填充算法预定义结构
-	///Pre-define the structure which is using in the scanline fill
+	//扫描线填充算法预定义结构
 
 	struct ShapeHeader
 	{
@@ -145,6 +229,20 @@ namespace PolygonCut
 		//低字节序
 		public int Version;     //value: 1000
 		public int ShapeType;
+		/// 0	Null Shape
+		/// 1	Point
+		/// 3	PolyLine
+		/// 5	Polygon
+		/// 8	MultiPoint
+		/// 11	PointZ
+		/// 13	PolyLineZ
+		/// 15	PolygonZ
+		/// 18	MultiPointZ
+		/// 21	PointM
+		/// 23	PolyLineM
+		/// 25	PolygonM
+		/// 28	MultiPointM
+		/// 31	MultiPatch
 		public double XMin;
 		public double YMin;
 		public double XMax;
@@ -154,26 +252,799 @@ namespace PolygonCut
 		public double MMin;
 		public double MMax;
 	}
-	///Shapefile文件标头结构
-	///Using for the SHP file header
+	//Shapefile文件标头结构
 
 	struct CheckPoint
 	{
 		public int Pre;
 		public int Next;
 	}
-	///前后检查点结构
-	///Using to define the front and rear point of a check point
+	//前后检查点结构
 
-	class Vertex
+	class VertexPolyLine
 	{
 		public int ID;//顶点ID
-		public Vertex PreVertex;//前顶点
-		public Vertex NextVertex;//后顶点
+		public VertexPolyLine PreVertex;//前顶点
+		public VertexPolyLine NextVertex;//后顶点
+		public double X;//点坐标X
+		public double Y;//点坐标Y
+		public int LineID;//所在折线段ID
+		public VertexPolyLine()
+		{
+			PreVertex = null;
+			NextVertex = null;
+			ID = 0;
+		}
+		//默认构造函数，内含前一顶点ID以及后一顶点ID，以及其所属的折线段的ID
+	}
+	//定义类Vertex（顶点）
+
+	class PolyLine
+	{
+		public int id;//折线段ID
+		public int RecordLength;//SHP记录长度
+		public int ShapeType;//SHP图形类型
+		public double xmin;//SHP内X最小值
+		public double ymin;//SHP内Y最小值
+		public double xmax;//SHP内X最大值
+		public double ymax;//SHP内Y最大值
+		public int NumOfParts;//SHP内线数量
+		public int NumOfPoints;//SHP内点数量
+		public int[] Parts;//SHP内每个部分所占长度
+		public List<VertexPolyLine> points;//由顶点构成的集合
+		public PolyLine()
+		{
+			points = new List<VertexPolyLine>();
+		}
+		//默认构造函数，将上面的points实例化
+	}
+	//定义类PolyLine
+
+	class PolyLines
+	{
+		public List<PolyLine> polylines;//由多条折线段构成的折线组
+		public static int NumOfInterSects = 0;//设置交点计数，初值为零，设置静态用于计数
+		public List<IntersectNode> InterSectPoints;//由多个交点构成的交点组
+		//public List<PointF> inse_points = new List<PointF>();
+		public ShapeHeader MH;
+		int count = 0;
+		public int Count
+		{
+			get { return count; }
+		}
+		//属性Count，操作元素count，只读
+		public PolyLines()
+		{
+			polylines = new List<PolyLine>();
+			InterSectPoints = new List<IntersectNode>();
+		}
+		//默认构造函数，生成由折线类以及交点类构成的泛型集合
+		public static UInt32 ReverseBytes(UInt32 value)
+		{
+			return (value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 | (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24;
+		}
+		//高低字节转序
+		public void ReadShapeFile(string filePath)
+		{
+			FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			BinaryReader br = new BinaryReader(fs);
+			//高字节序
+			MH.FileCode = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.Unused1 = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.Unused2 = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.Unused3 = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.Unused4 = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.Unused5 = (Int32)ReverseBytes(br.ReadUInt32());
+			MH.FileLength = (Int32)ReverseBytes(br.ReadUInt32());
+			//低字节序
+			MH.Version = br.ReadInt32();
+			MH.ShapeType = br.ReadInt32();
+			MH.XMin = br.ReadDouble();
+			MH.YMin = br.ReadDouble();
+			MH.XMax = br.ReadDouble();
+			MH.YMax = br.ReadDouble();
+			MH.ZMin = br.ReadDouble();
+			MH.ZMax = br.ReadDouble();
+			MH.MMin = br.ReadDouble();
+			MH.MMax = br.ReadDouble();
+			try
+			{
+				while (true)
+				{
+					PolyLine polyL = new PolyLine();
+					//====
+					polyL.id = (Int32)ReverseBytes(br.ReadUInt32());
+					polyL.RecordLength = (Int32)ReverseBytes(br.ReadUInt32());
+					polyL.ShapeType = br.ReadInt32();
+					polyL.xmin = br.ReadDouble();
+					polyL.ymin = br.ReadDouble();
+					polyL.xmax = br.ReadDouble();
+					polyL.ymax = br.ReadDouble();
+					polyL.NumOfParts = br.ReadInt32();
+					polyL.NumOfPoints = br.ReadInt32();
+					//====
+					polyL.Parts = new int[polyL.NumOfParts];//长度为NumOfParts的数组，即线的数量
+					for (int i = 0; i < polyL.NumOfParts; i++)
+					{
+						polyL.Parts[i] = br.ReadInt32();
+					}
+					//折线段首点数组索引位
+					VertexPolyLine PreVer = null;
+					VertexPolyLine VertexFirst = new VertexPolyLine();
+					//====
+					VertexFirst.ID = 1;
+					VertexFirst.LineID = polyL.id;
+					VertexFirst.PreVertex = null;
+					VertexFirst.NextVertex = null;
+					VertexFirst.X = br.ReadDouble();
+					VertexFirst.Y = br.ReadDouble();
+					PreVer = VertexFirst;
+					//====
+					polyL.points.Add(VertexFirst);
+					for (int i = 1; i < polyL.NumOfPoints - 1; i++)
+					{
+						VertexPolyLine VertexMid = new VertexPolyLine();
+						//====
+						VertexMid.PreVertex = PreVer;
+						VertexMid.PreVertex.NextVertex = VertexMid;
+						VertexMid.ID = PreVer.ID + 1;
+						VertexMid.LineID = polyL.id;
+						VertexMid.X = br.ReadDouble();
+						VertexMid.Y = br.ReadDouble();
+						VertexMid.NextVertex = null;
+						PreVer = VertexMid;
+						//====
+						polyL.points.Add(VertexMid);
+					}
+					VertexPolyLine VetLast = new VertexPolyLine();
+					//====
+					VetLast.PreVertex = PreVer;
+					PreVer.NextVertex = VetLast;
+					VetLast.ID = VetLast.PreVertex.ID + 1;
+					VetLast.LineID = polyL.id;
+					VetLast.NextVertex = null;
+					VetLast.X = br.ReadDouble();
+					VetLast.Y = br.ReadDouble();
+					//====
+					polyL.points.Add(VetLast);
+					polylines.Add(polyL);
+					count++;
+				}
+			}
+			catch (EndOfStreamException e)
+			{
+				//MessageBox.Show(e.ToString());
+				//MessageBox.Show("Ending of File");				
+			}
+		}
+		//读取SHP文件内容
+		public void CalIntersect(PolyLine line1, PolyLine line2)
+		{
+			string sortedX = "";
+			int[,] CheckedLines = new int[line1.points.Count, line2.points.Count];
+			for (int i = 0; i < line1.points.Count; i++)
+			{
+				for (int j = 0; j < line2.points.Count; j++)
+				{
+					CheckedLines[i, j] = 0;
+				}
+			}
+			List<VertexPolyLine> SortedVert = new List<VertexPolyLine>
+			{
+				line1.points[0]
+			};
+			int PreJ = 0;
+			for (int i = 1; i < line1.points.Count; i++)
+			{
+				int sorted = 0;
+				int j = PreJ;
+				if (line1.points[i].X <= SortedVert[j].X)
+				{
+					while (sorted == 0)
+					{
+						if (j == 0)
+						{
+							sorted = 1;
+							PreJ = j;
+						}
+						else if (line1.points[i].X > SortedVert[j - 1].X)
+						{
+							PreJ = j;
+							sorted = 1;
+						}
+						else
+						{
+							j -= 1;
+						}
+					}
+					SortedVert.Insert(PreJ, line1.points[i]);
+				}
+				else
+				{
+					while (sorted == 0)
+					{
+						if (j == SortedVert.Count - 1)
+						{
+							sorted = 1;
+							PreJ = j + 1;
+						}
+						else if (line1.points[i].X < SortedVert[j + 1].X)
+						{
+
+							PreJ = j + 1;
+							sorted = 1;
+						}
+						else
+						{
+							j += 1;
+						}
+					}
+					SortedVert.Insert(PreJ, line1.points[i]);
+				}
+			}
+			for (int i = 0; i < line2.points.Count; i++)
+			{
+				int sorted = 0;
+				int j = PreJ;
+				if (line2.points[i].X <= SortedVert[j].X)
+				{
+					while (sorted == 0)
+					{
+						if (j == 0)
+						{
+							sorted = 1;
+							PreJ = j;
+						}
+						else if (line2.points[i].X > SortedVert[j - 1].X)
+						{
+							PreJ = j;
+							sorted = 1;
+						}
+						else
+						{
+							j -= 1;
+						}
+					}
+					SortedVert.Insert(PreJ, line2.points[i]);
+				}
+				else
+				{
+					while (sorted == 0)
+					{
+						if (j == SortedVert.Count - 1)
+						{
+							sorted = 1;
+							PreJ = j + 1;
+						}
+						else if (line2.points[i].X < SortedVert[j + 1].X)
+						{
+
+							PreJ = j + 1;
+							sorted = 1;
+						}
+						else
+						{
+							j += 1;
+						}
+					}
+					SortedVert.Insert(PreJ, line2.points[i]);
+				}
+			}
+			sortedX = "";
+			for (int ii = 0; ii < SortedVert.Count; ii++)
+			{
+				sortedX = sortedX + ii.ToString() + ")" + SortedVert[ii].LineID.ToString() + "->" + SortedVert[ii].ID + ":" + SortedVert[ii].X.ToString() + "\n";
+			}
+			//MessageBox.Show(sortedX);
+			//MessageBox.Show(l1.points.Count.ToString());
+			CheckPoint[] l1Points = new CheckPoint[line1.points.Count];
+			CheckPoint[] l2Points = new CheckPoint[line2.points.Count];
+			for (int i = 0; i < line1.points.Count; i++)
+			{
+				l1Points[i].Pre = 0;
+				l1Points[i].Next = 0;
+			}
+			for (int i = 0; i < line2.points.Count; i++)
+			{
+				l2Points[i].Pre = 0;
+				l2Points[i].Next = 0;
+			}
+			for (int i = 0; i < SortedVert.Count; i++)
+			{
+				if (SortedVert[i].LineID == line1.id)
+				{
+					if (SortedVert[i].PreVertex != null & l1Points[SortedVert[i].ID - 1].Pre != 1)
+					{
+						int PointLoc = 0;
+						for (int jj = i; jj < SortedVert.Count; jj++)
+						{
+							if (SortedVert[i].PreVertex.ID == SortedVert[jj].ID & SortedVert[jj].LineID == line1.id)
+							{
+								PointLoc = jj;
+								l1Points[SortedVert[i].ID - 1].Pre = 1;
+								l1Points[SortedVert[jj].ID - 1].Next = 1;
+								break;
+							}
+						}
+						for (int jj = i; jj <= PointLoc; jj++)
+						{
+							if (SortedVert[jj].LineID == line2.id)
+							{
+								if (SortedVert[jj].PreVertex != null)
+								{
+									//MessageBox.Show("L1:"+SortedVert[PointLoc].ID.ToString()+"->"+ SortedVert[i].ID.ToString()+"\nL2:"+ SortedVert[jj].PreVertex.ID.ToString() + "->" + SortedVert[jj].ID.ToString());
+									//MessageBox.Show(SortedVert[PointLoc].X.ToString() + "," + SortedVert[PointLoc].Y.ToString()+";"+ SortedVert[i].X.ToString() + "," + SortedVert[i].Y.ToString() + "\n" + SortedVert[jj].PreVertex.X.ToString() + "," + SortedVert[jj].PreVertex.Y.ToString() + ";" + SortedVert[jj].X.ToString() + "," + SortedVert[jj].Y.ToString());
+									if (CheckedLines[SortedVert[PointLoc].ID - 1, SortedVert[jj].PreVertex.ID - 1] != 1)
+									{
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[PointLoc], SortedVert[i], SortedVert[jj].PreVertex, SortedVert[jj]);
+										CheckedLines[SortedVert[PointLoc].ID - 1, SortedVert[jj].PreVertex.ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+								}
+								if (SortedVert[jj].NextVertex != null)
+								{
+									//MessageBox.Show("L1:" + SortedVert[PointLoc].ID.ToString() + "->" + SortedVert[i].ID.ToString() + "\nL2:" + SortedVert[jj].ID.ToString() + "->" + SortedVert[jj].NextVertex.ID.ToString());
+									if (CheckedLines[SortedVert[PointLoc].ID - 1, SortedVert[jj].ID - 1] != 1)
+									{
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[PointLoc], SortedVert[i], SortedVert[jj], SortedVert[jj].NextVertex);
+										CheckedLines[SortedVert[PointLoc].ID - 1, SortedVert[jj].ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+
+								}
+
+							}
+						}
+					}
+
+					if (SortedVert[i].NextVertex != null & l1Points[SortedVert[i].ID - 1].Next != 1)
+					{
+						int PointLoc = 0;
+						for (int jj = i; jj < SortedVert.Count; jj++)
+						{
+							if (SortedVert[i].NextVertex.ID == SortedVert[jj].ID & SortedVert[jj].LineID == line1.id)
+							{
+								PointLoc = jj;
+								l1Points[SortedVert[i].ID - 1].Next = 1;
+								l1Points[SortedVert[jj].ID - 1].Pre = 1;
+								break;
+							}
+						}
+						//MessageBox.Show("--"+SortedVert[i].ID.ToString() + "," + SortedVert[PointLoc].ID.ToString());
+
+
+
+						for (int jj = i; jj <= PointLoc; jj++)
+						{
+							if (SortedVert[jj].LineID == line2.id)
+							{
+								if (SortedVert[jj].PreVertex != null)
+								{
+									//MessageBox.Show("L1 Next:" + SortedVert[i].ID.ToString() + "->" + SortedVert[PointLoc].ID.ToString() + "\nL2 Next:" + SortedVert[jj].PreVertex.ID.ToString() + "->" + SortedVert[jj].ID.ToString());
+									//MessageBox.Show(SortedVert[i].X.ToString() + "," + SortedVert[i].Y.ToString() + ";" + SortedVert[PointLoc].X.ToString() + "," + SortedVert[PointLoc].Y.ToString() + "\n" + SortedVert[jj].PreVertex.X.ToString() + "," + SortedVert[jj].PreVertex.Y.ToString() + ";" + SortedVert[jj].X.ToString() + "," + SortedVert[jj].Y.ToString());
+									if (CheckedLines[SortedVert[i].ID - 1, SortedVert[jj].PreVertex.ID - 1] != 1)
+									{
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[i], SortedVert[PointLoc], SortedVert[jj].PreVertex, SortedVert[jj]);
+										CheckedLines[SortedVert[i].ID - 1, SortedVert[jj].PreVertex.ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+
+								}
+								if (SortedVert[jj].NextVertex != null)
+								{
+									if (CheckedLines[SortedVert[i].ID - 1, SortedVert[jj].ID - 1] != 1)
+									{
+										//MessageBox.Show("L1 Next:" + SortedVert[i].ID.ToString() + "->" + SortedVert[PointLoc].ID.ToString() + "\nL2 Next:" + SortedVert[jj].ID.ToString() + "->" + SortedVert[jj].NextVertex.ID.ToString());
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[i], SortedVert[PointLoc], SortedVert[jj], SortedVert[jj].NextVertex);
+										CheckedLines[SortedVert[i].ID - 1, SortedVert[jj].ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+
+								}
+
+							}
+						}
+					}
+				}
+				else if (SortedVert[i].LineID == line2.id)
+				{
+					if (SortedVert[i].PreVertex != null & l2Points[SortedVert[i].ID - 1].Pre != 1)
+					{
+						int PointLoc = 0;
+						for (int jj = i; jj < SortedVert.Count; jj++)
+						{
+							if (SortedVert[i].PreVertex.ID == SortedVert[jj].ID & SortedVert[jj].LineID == line2.id)
+							{
+								PointLoc = jj;
+								l2Points[SortedVert[i].ID - 1].Pre = 1;
+								l2Points[SortedVert[jj].ID - 1].Next = 1;
+								break;
+							}
+						}
+						for (int jj = i; jj <= PointLoc; jj++)
+						{
+							if (SortedVert[jj].LineID == line1.id)
+							{
+								if (SortedVert[jj].PreVertex != null)
+								{
+									//MessageBox.Show("LL1:" + SortedVert[PointLoc].ID.ToString() + "->" + SortedVert[i].ID.ToString() + "\nLL2:" + SortedVert[jj].PreVertex.ID.ToString() + "->" + SortedVert[jj].ID.ToString());
+									//MessageBox.Show(SortedVert[PointLoc].X.ToString() + "," + SortedVert[PointLoc].Y.ToString() + ";" + SortedVert[i].X.ToString() + "," + SortedVert[i].Y.ToString() + "\n" + SortedVert[jj].PreVertex.X.ToString() + "," + SortedVert[jj].PreVertex.Y.ToString() + ";" + SortedVert[jj].X.ToString() + "," + SortedVert[jj].Y.ToString());
+									if (CheckedLines[SortedVert[jj].PreVertex.ID - 1, SortedVert[i].PreVertex.ID - 1] != 1)
+									{
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[jj].PreVertex, SortedVert[jj], SortedVert[PointLoc], SortedVert[i]);
+										CheckedLines[SortedVert[jj].PreVertex.ID - 1, SortedVert[i].PreVertex.ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+
+								}
+								if (SortedVert[jj].NextVertex != null)
+								{
+									if (CheckedLines[SortedVert[jj].ID - 1, SortedVert[i].PreVertex.ID - 1] != 1)
+									{
+										//MessageBox.Show("LL1:" + SortedVert[PointLoc].ID.ToString() + "->" + SortedVert[i].ID.ToString() + "\nLL2:" + SortedVert[jj].ID.ToString() + "->" + SortedVert[jj].NextVertex.ID.ToString());
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[jj], SortedVert[jj].NextVertex, SortedVert[PointLoc], SortedVert[i]);
+										CheckedLines[SortedVert[jj].ID - 1, SortedVert[i].PreVertex.ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+								}
+
+							}
+						}
+					}
+
+					if (SortedVert[i].NextVertex != null & l2Points[SortedVert[i].ID - 1].Next != 1)
+					{
+						int PointLoc = 0;
+						for (int jj = i; jj < SortedVert.Count; jj++)
+						{
+							if (SortedVert[i].NextVertex.ID == SortedVert[jj].ID & SortedVert[jj].LineID == line2.id)
+							{
+								PointLoc = jj;
+								l2Points[SortedVert[i].ID - 1].Next = 1;
+								l2Points[SortedVert[jj].ID - 1].Pre = 1;
+								break;
+							}
+						}
+						for (int jj = i; jj <= PointLoc; jj++)
+						{
+							if (SortedVert[jj].LineID == line1.id)
+							{
+								if (SortedVert[jj].PreVertex != null)
+								{
+									if (CheckedLines[SortedVert[jj].PreVertex.ID - 1, SortedVert[i].ID - 1] != 1)
+									{
+										//MessageBox.Show("LL1 Next:" + SortedVert[i].ID.ToString() + "->" + SortedVert[PointLoc].ID.ToString() + "\nLL2 Next:" + SortedVert[jj].PreVertex.ID.ToString() + "->" + SortedVert[jj].ID.ToString());
+										//MessageBox.Show(SortedVert[i].X.ToString() + "," + SortedVert[i].Y.ToString() + ";" + SortedVert[PointLoc].X.ToString() + "," + SortedVert[PointLoc].Y.ToString() + "\n" + SortedVert[jj].PreVertex.X.ToString() + "," + SortedVert[jj].PreVertex.Y.ToString() + ";" + SortedVert[jj].X.ToString() + "," + SortedVert[jj].Y.ToString());
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[jj].PreVertex, SortedVert[jj], SortedVert[i], SortedVert[PointLoc]);
+										CheckedLines[SortedVert[jj].PreVertex.ID - 1, SortedVert[i].ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+								}
+								if (SortedVert[jj].NextVertex != null)
+								{
+									if (CheckedLines[SortedVert[jj].ID - 1, SortedVert[i].ID - 1] != 1)
+									{
+										//MessageBox.Show("LL1 Next:" + SortedVert[i].ID.ToString() + "->" + SortedVert[PointLoc].ID.ToString() + "\nLL2 Next:" + SortedVert[jj].ID.ToString() + "->" + SortedVert[jj].NextVertex.ID.ToString());
+										List<IntersectNode> nodes = CheckIntersection(SortedVert[jj], SortedVert[jj].NextVertex, SortedVert[i], SortedVert[PointLoc]);
+										CheckedLines[SortedVert[jj].ID - 1, SortedVert[i].ID - 1] = 1;
+										if (nodes != null)
+										{
+											InterSectPoints.Add(nodes[0]);
+											if (nodes.Count > 1) InterSectPoints.Add(nodes[0]);
+										}
+									}
+								}
+
+							}
+						}
+					}
+				}
+			}
+		}
+		//计算交点
+		public List<IntersectNode> CheckIntersection(VertexPolyLine SortedVert11, VertexPolyLine SortedVert12, VertexPolyLine SortedVert21, VertexPolyLine SortedVert22)
+		{
+			double InterSectX, InterSectY1, InterSectY2;
+			double MinL1_y, MaxL1_y, MinL2_y, MaxL2_y;
+			double MinL1_x, MaxL1_x;
+			double MinL2_x, MaxL2_x;
+			string str = "";
+			str = str + SortedVert11.LineID.ToString() + "." + SortedVert11.ID.ToString() + "->" + SortedVert12.LineID.ToString() + "." + SortedVert12.ID.ToString() + "\n";
+			str = str + SortedVert21.LineID.ToString() + "." + SortedVert21.ID.ToString() + "->" + SortedVert22.LineID.ToString() + "." + SortedVert22.ID.ToString() + "\n";
+			//str = str + "The" + NumOfInterSects.ToString() + "th:" + InterSectX.ToString() + ";" + InterSectY1.ToString() + ";" + SortedVert11.ID.ToString() + ";" + SortedVert12.ID.ToString();
+			//MessageBox.Show(str);
+			List<IntersectNode> ListNodes = new List<IntersectNode>();
+			InterSectY2 = -9999;
+			if (SortedVert11.Y > SortedVert12.Y)
+			{
+				MinL1_y = SortedVert12.Y;
+				MaxL1_y = SortedVert11.Y;
+			}
+			else
+			{
+				MinL1_y = SortedVert11.Y;
+				MaxL1_y = SortedVert12.Y;
+			}
+			if (SortedVert21.Y > SortedVert22.Y)
+			{
+				MinL2_y = SortedVert22.Y;
+				MaxL2_y = SortedVert21.Y;
+			}
+			else
+			{
+				MinL2_y = SortedVert21.Y;
+				MaxL2_y = SortedVert22.Y;
+			}
+			if (MinL1_y > MaxL2_y | MinL2_y > MaxL1_y)
+			{
+				return null;
+			}
+			if (SortedVert11.X > SortedVert12.X)
+			{
+				MinL1_x = SortedVert12.X;
+				MaxL1_x = SortedVert11.X;
+			}
+			else
+			{
+				MinL1_x = SortedVert11.X;
+				MaxL1_x = SortedVert12.X;
+			}
+			if (SortedVert21.X > SortedVert22.X)
+			{
+				MinL2_x = SortedVert22.X;
+				MaxL2_x = SortedVert21.X;
+			}
+			else
+			{
+				MinL2_x = SortedVert21.X;
+				MaxL2_x = SortedVert22.X;
+			}
+			if ((SortedVert11.X == SortedVert12.X) | SortedVert21.X == SortedVert22.X)
+			{
+				if ((SortedVert11.X == SortedVert12.X) & (SortedVert21.X == SortedVert22.X))
+				{
+					if ((SortedVert11.X == SortedVert22.X))
+					{
+						InterSectX = SortedVert11.X;
+						if (MinL1_y > MinL2_y)
+						{
+							InterSectY1 = MinL1_y;
+						}
+						else
+						{
+							InterSectY1 = MinL2_y;
+						}
+						if (MaxL1_y > MaxL2_y)
+						{
+							InterSectY2 = MaxL2_y;
+						}
+						else
+						{
+							InterSectY2 = MaxL1_y;
+						}
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else if (SortedVert11.X == SortedVert12.X)
+				{
+					InterSectX = SortedVert11.X;
+					InterSectY1 = SortedVert21.Y - (SortedVert21.Y - SortedVert22.Y) / (SortedVert21.X - SortedVert22.X) * (SortedVert21.X - SortedVert11.X);
+					if (InterSectY1 > MaxL1_y | InterSectY1 < MinL1_y)
+					{
+						return null;
+					}
+				}
+				else
+				{
+					InterSectX = SortedVert21.X;
+					InterSectY1 = SortedVert11.Y - (SortedVert11.Y - SortedVert12.Y) / (SortedVert11.X - SortedVert12.X) * (SortedVert11.X - SortedVert21.X);
+					if (InterSectY1 > MaxL1_y | InterSectY1 < MinL1_y)
+					{
+						return null;
+					}
+				}
+			}
+			else
+			{
+				//MessageBox.Show("("+SortedVert11.X.ToString()+","+ SortedVert11.Y.ToString()+"),("+ SortedVert12.X.ToString()+","+ SortedVert12.Y.ToString()+")"+"\n" +"("+ SortedVert21.X.ToString()+","+ SortedVert21.Y.ToString()+"),("+ SortedVert22.X.ToString()+","+ SortedVert22.Y.ToString()+")");
+				double tmp1 = SortedVert21.Y - SortedVert11.Y + (SortedVert11.Y - SortedVert12.Y) / (SortedVert11.X - SortedVert12.X) * SortedVert11.X - (SortedVert21.Y - SortedVert22.Y) / (SortedVert21.X - SortedVert22.X) * SortedVert21.X;
+				double tmp2 = (SortedVert11.Y - SortedVert12.Y) / (SortedVert11.X - SortedVert12.X) - (SortedVert21.Y - SortedVert22.Y) / (SortedVert21.X - SortedVert22.X);
+				InterSectX = tmp1 / tmp2;
+				InterSectY1 = 0;
+				//MessageBox.Show("InterSectX:" + InterSectX.ToString() + "\n" + "InterSectY:" + InterSectY1.ToString());
+				//MessageBox.Show(SortedVert11.X.ToString()+";" + InterSectX.ToString() +","+ SortedVert12.X.ToString());
+
+				if ((InterSectX < MinL1_x) | (InterSectX > MaxL1_x) | (InterSectX < MinL2_x) | (InterSectX > MaxL2_x))
+				{
+					return null;
+				}
+				else
+				{
+					InterSectY1 = SortedVert11.Y - (SortedVert11.Y - SortedVert12.Y) / (SortedVert11.X - SortedVert12.X) * (SortedVert11.X - InterSectX);
+				}
+				NumOfInterSects = NumOfInterSects + 1;
+
+				//MessageBox.Show(NumOfInterSects.ToString()+"\nInterSectX:" + InterSectX.ToString()+"\n"+ "InterSectY:" + InterSectY1.ToString());
+
+			}
+			if (InterSectY2 != -9999)
+			{
+				IntersectNode nodes0 = new IntersectNode();
+				IntersectNode nodes1 = new IntersectNode();
+
+				nodes0.X = InterSectX;
+				nodes0.Y = InterSectY1;
+				nodes1.X = InterSectX;
+				nodes1.Y = InterSectY2;
+
+				nodes0.line1ID = SortedVert11.LineID;
+				nodes0.line2ID = SortedVert21.LineID;
+
+				nodes0.PreVertLine1 = SortedVert11.ID;
+				nodes0.NextVertLine1 = SortedVert12.ID;
+				nodes0.PreVertLine1 = SortedVert21.ID;
+				nodes0.NextVertLine2 = SortedVert22.ID;
+
+				nodes1.PreVertLine1 = SortedVert11.ID;
+				nodes1.NextVertLine1 = SortedVert12.ID;
+				nodes1.PreVertLine2 = SortedVert21.ID;
+				nodes1.NextVertLine2 = SortedVert22.ID;
+
+				nodes1.line1ID = SortedVert11.LineID;
+				nodes1.line2ID = SortedVert21.LineID;
+				ListNodes.Add(nodes0);
+				ListNodes.Add(nodes1);
+				return ListNodes;
+			}
+			else
+			{
+				IntersectNode nodes0 = new IntersectNode();
+				nodes0.X = InterSectX;
+				nodes0.Y = InterSectY1;
+				nodes0.PreVertLine1 = SortedVert11.ID;
+				nodes0.NextVertLine1 = SortedVert12.ID;
+				nodes0.PreVertLine2 = SortedVert21.ID;
+				nodes0.NextVertLine2 = SortedVert22.ID;
+				nodes0.line1ID = SortedVert11.LineID;
+				nodes0.line2ID = SortedVert21.LineID;
+				ListNodes.Add(nodes0);
+				//str = str + SortedVert11.LineID.ToString()+"."+ SortedVert11.ID.ToString()+"->"+ SortedVert12.LineID.ToString() + "." + SortedVert12.ID.ToString()+"\n";
+				//str = str + SortedVert21.LineID.ToString() + "." + SortedVert21.ID.ToString() + "->" + SortedVert22.LineID.ToString() + "." + SortedVert22.ID.ToString() + "\n";
+
+				//str = str + "The" + NumOfInterSects.ToString() + "th:" + InterSectX.ToString() + ";" + InterSectY1.ToString() + ";" + SortedVert11.ID.ToString() + ";" + SortedVert12.ID.ToString();
+				//MessageBox.Show(str);
+				return ListNodes;
+			}
+		}
+		//检查交点
+		public class IntersectNode
+		{
+			public int ID;
+			//Line1，2线段ID
+			public int line1ID;
+			public int line2ID;
+			//Line1，2前后顶点
+			public int PreVertLine1;
+			public int NextVertLine1;
+			public int PreVertLine2;
+			public int NextVertLine2;
+			public double X
+			{
+				get { return x; }
+				set { x = value; }
+			}
+			public double Y
+			{
+				get { return y; }
+				set { y = value; }
+			}
+			double x;
+			double y;
+		}
+		//定义交点类
+		public void DrawPolyLines(PictureBox pb)
+		{
+			Graphics g = pb.CreateGraphics();
+			g.Clear(Color.Gray);
+			foreach (PolyLine pl in polylines)
+			{
+				Pen penDrawLine = new Pen(Color.Red, 3);
+				PointF[] pointsF = new PointF[pl.points.Count];
+				for (int i = 0; i < pointsF.Length; i++)
+				{
+					pointsF[i].X = (float)(pl.points[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width;
+					pointsF[i].Y = (float)(pb.Height - (pl.points[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height);
+				}
+				g.DrawLines(penDrawLine, pointsF);
+			}
+		}
+		//绘制SHP内折线段
+		public void DrawInterSectPoints(PictureBox pb)
+		{
+			//string str = "";
+			Graphics g = pb.CreateGraphics();
+			//g.Clear(Color.Gray);
+			Pen draw_point = new Pen(Color.Red, 1);
+			Brush brush = new SolidBrush(Color.LightGreen);
+			//Pen pen1 = new Pen(Color.Red, 3);
+			PointF[] pts = new PointF[InterSectPoints.Count];
+			for (int i = 0; i < InterSectPoints.Count; i++)
+			{
+				pts[i].X = (float)(InterSectPoints[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width;
+				pts[i].Y = (float)(pb.Height - (InterSectPoints[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height);
+				Console.WriteLine("第{0}个交点：" + InterSectPoints[i].X + " " + InterSectPoints[i].Y, i + 1);
+				g.DrawEllipse(draw_point, pts[i].X - 5, pts[i].Y - 5, 9, 9);
+				g.FillEllipse(brush, pts[i].X - 5, pts[i].Y - 5, 9, 9);
+				//str = str + pts[i].X + "," + pts[i].Y + "\n";
+			}
+			//MessageBox.Show(str);
+		}
+		//绘制交点
+		public void Network()
+		{
+			for (int i = 0; i < count; i++)
+			{
+				for (int j = i + 1; j < count; j++)
+				{
+					bool c = false;
+					if (polylines[i].xmax < polylines[j].xmin ||
+						polylines[i].xmin > polylines[j].xmax ||
+						polylines[i].ymax < polylines[j].xmin ||
+						polylines[i].ymin < polylines[j].ymax)
+					{
+						c = false;// We're outside the polygon!
+					}
+					else
+					{
+						//
+					}
+				}
+			}
+		}
+		//网格分析，待实现
+	}
+	//定义类PolyLines，由折线构造的线表
+
+	class VertexPolygon
+	{
+		public int ID;//顶点ID
+		public VertexPolygon PreVertex;//前顶点
+		public VertexPolygon NextVertex;//后顶点
 		public double X;//点坐标X
 		public double Y;//点坐标Y
 		public int PolygonID;//所在面ID
-		public Vertex()
+		public VertexPolygon()
 		{
 			PreVertex = null;
 			NextVertex = null;
@@ -208,11 +1079,11 @@ namespace PolygonCut
 		public int NumOfParts;				//SHP内面数量
 		public int NumOfPoints;				//SHP内点数量
 		public int[] Parts;					//SHP内每个部分索引数组
-		public List<Vertex> points;			//由顶点构成的集合
+		public List<VertexPolygon> points;			//由顶点构成的集合
 	//	public List<BasicLine> lines;		//由多边形基础线段构成的集合
 		public PolyGon()
 		{
-			points = new List<Vertex>();
+			points = new List<VertexPolygon>();
 		}
 		//默认构造函数，将上面的points实例化
 	}
@@ -225,8 +1096,7 @@ namespace PolygonCut
 		public List<PointF> inse_points = new List<PointF>();
 		public ShapeHeader MH;
 		public string inname = "";
-		///用来存放IsPointInPolygon函数的数据
-		///Using for storage the data made by the method IsPointInPolygon
+		//用来存放IsPointInPolygon函数的数据
 		int count = 0;
 		int loop_time = 0;
 		int check_time = 0;
@@ -294,8 +1164,8 @@ namespace PolygonCut
 						polyG.Parts[i] = br.ReadInt32();
 					}
 					//面首点数组索引位
-					Vertex PreVer = null;
-					Vertex VertexFirst = new Vertex();
+					VertexPolygon PreVer = null;
+					VertexPolygon VertexFirst = new VertexPolygon();
 					//====
 					VertexFirst.ID = 1;
 					VertexFirst.PolygonID = polyG.id;
@@ -308,7 +1178,7 @@ namespace PolygonCut
 					polyG.points.Add(VertexFirst);
 					for(int i = 1; i < polyG.NumOfPoints - 1; i++)
 					{
-						Vertex VertexMid = new Vertex();
+						VertexPolygon VertexMid = new VertexPolygon();
 						//====
 						VertexMid.PreVertex = PreVer;
 						VertexMid.PreVertex.NextVertex = VertexMid;
@@ -321,7 +1191,7 @@ namespace PolygonCut
 						//====
 						polyG.points.Add(VertexMid);
 					}
-					Vertex VetLast = new Vertex();
+					VertexPolygon VetLast = new VertexPolygon();
 					//====
 					VetLast.PreVertex = PreVer;
 					PreVer.NextVertex = VetLast;
@@ -342,8 +1212,7 @@ namespace PolygonCut
 				//Console.WriteLine("文件读取完毕");				
 			}
 		}
-		///读取SHP文件内容
-		///Read the contents in a shapefile
+		//读取SHP文件内容
 		public void DrawPolyGons(PictureBox pb)
 		{
 			Graphics g = pb.CreateGraphics();
@@ -440,7 +1309,7 @@ namespace PolygonCut
 				g.FillEllipse(brush, pointsF[i].X - 5, pointsF[i].Y - 5, 9, 9);
 				//Console.WriteLine(pointsF[i].X + " " + pointsF[i].Y);
 			}
-			Console.WriteLine("共绘制了{0}个交点", inse_points.Count);
+			//Console.WriteLine("共绘制了{0}个交点", inse_points.Count);
 		}
 		//绘制交点
 		public void CheckLineInPolygonsInse()
@@ -590,7 +1459,7 @@ namespace PolygonCut
 				}
 			}
 			//多边形之间检查
-			Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
+			//Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
 			///每次检查两个多边形
 			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过(节省大部分时间)
 			///然后具体检查线段相交
@@ -645,7 +1514,7 @@ namespace PolygonCut
 			return true;
 			///综上所述，两线段有交点（不考虑共直线情况）需同时满足以下条件，delta不等于0，lamda和myu都在区间(0,1]内
 		}
-		///通过两点坐标判断线段是否相交
+		///跨立实验：通过两点坐标判断线段是否相交
 		///参数a1, a2, b1, b2分别为线段A, B的两端点
 		///返回值false不相交，true相交
 		private static double Determinant(double v1, double v2, double v3, double v4)
@@ -703,7 +1572,7 @@ namespace PolygonCut
 				inse_points.Add(inse_point);
 				//非端点时加一点
 			}
-			Console.WriteLine(inse_point.ToString());
+			//Console.WriteLine(inse_point.ToString());
 		}
 		///计算交点坐标
 		///通过线段两点式方程联立确定交点坐标
