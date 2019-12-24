@@ -1032,7 +1032,7 @@ namespace Re0GIS
 				}
 			}
 		}
-		//网格分析，待实现
+		//网格分析
 	}
 	//定义类PolyLines，由折线构造的线表
 
@@ -1329,25 +1329,25 @@ namespace Re0GIS
 						|| polygons[rear].ymax < polygons[front].ymin
 						|| polygons[rear].xmax < polygons[front].xmin)
 					{
-						//Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rear);
+						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rear);
 						loop_time++;
 					}
 					//多边形碰撞箱检查，不相交
 					else
 					{
-						//Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rear);
-						string blacklist_j = "";
+						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rear);
+						List<int> blacklist_j = new List<int>();
 						for(int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
 							for(int j = 0; j < polygons[rear].points.Count - 1; j++)
 							{
 								loop_time++;
-								if(blacklist_j.Contains(Convert.ToString(j)))
+								if(blacklist_j.Contains(j))
 								{
-									//Console.WriteLine("边{0}跳过", j);
+									Console.WriteLine("边{0}跳过", j);
 									continue;
 								}
-								//Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rear, j);
+								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rear, j);
 								PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
 								PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
 								PointF point2a = new PointF((float)polygons[rear].points[j].X, (float)polygons[rear].points[j].Y);
@@ -1367,19 +1367,19 @@ namespace Re0GIS
 									Inse = CheckIfInse(point1a, point1b, point2a, point2b);
 									if(Inse)
 									{
-										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
+										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
 										CalInsePoint(point1a, point1b, point2a, point2b);
 									}
 									else
 									{
-										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
+										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
 									}
 								}
 								else
 								{
-									//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
-									//Console.WriteLine("边{0}已加入多边形{1}的黑名单", j, front);
-									blacklist_j += Convert.ToString(j);
+									Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
+									Console.WriteLine("边{0}已加入多边形{1}的黑名单", j, front);
+									blacklist_j.Add(j);
 								}
 							}
 						}
@@ -1389,7 +1389,7 @@ namespace Re0GIS
 				}
 			}
 			//多边形之间检查
-			//Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
+			Console.WriteLine("循环次数：{0}，检查次数：{1}", loop_time, check_time);
 			///每次检查两个多边形
 			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过(节省大部分时间)
 			///然后具体检查线段相交
@@ -1459,34 +1459,34 @@ namespace Re0GIS
 		{
 			PointF inse_point = new PointF();
 			if(Math.Abs(a1.X - a2.X) <= 1e-6)
-				{
-					inse_point.X = a1.X;
-					inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
-				}
+			{
+				inse_point.X = a1.X;
+				inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
+			}
 			//线段A垂直X坐标轴(加法 4，乘法 2)
 			else if(Math.Abs(b1.X - b2.X) <= 1e-6)
-				{
-					inse_point.X = b1.X;
-					inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
-				}
+			{
+				inse_point.X = b1.X;
+				inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
+			}
 			//线段B垂直X坐标轴(加法 4，乘法 2)
 			else if(Math.Abs(a1.Y - a2.Y) <= 1e-6)
-				{
-					inse_point.Y = a1.Y;
-					inse_point.X = (a1.Y - b1.Y) / (b2.Y - b1.Y) * (b2.X - b1.X) + b1.X;
-				}
+			{
+				inse_point.Y = a1.Y;
+				inse_point.X = (a1.Y - b1.Y) / (b2.Y - b1.Y) * (b2.X - b1.X) + b1.X;
+			}
 			//线段A平行X坐标轴(加法 4，乘法 2)
 			else if(Math.Abs(b1.Y - b2.Y) <= 1e-6)
-				{
-					inse_point.Y = b1.Y;
-					inse_point.X = (b1.Y - a1.Y) / (a2.Y - a1.Y) * (a2.X - a1.X) + a1.X;
-				}
+			{
+				inse_point.Y = b1.Y;
+				inse_point.X = (b1.Y - a1.Y) / (a2.Y - a1.Y) * (a2.X - a1.X) + a1.X;
+			}
 			//线段B平行X坐标轴(加法 4，乘法 2)
 			else
-				{
-					inse_point.X = ((a1.Y - b1.Y) + (b1.Y - b2.Y) / (b1.X - b2.X) * b1.X - (a1.Y - a2.Y) / (a1.X - a2.X) * a1.X) / ((b1.Y - b2.Y) / (b1.X - b2.X) - (a1.Y - a2.Y) / (a1.X - a2.X));
-					inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
-				}
+			{
+				inse_point.X = ((a1.Y - b1.Y) + (b1.Y - b2.Y) / (b1.X - b2.X) * b1.X - (a1.Y - a2.Y) / (a1.X - a2.X) * a1.X) / ((b1.Y - b2.Y) / (b1.X - b2.X) - (a1.Y - a2.Y) / (a1.X - a2.X));
+				inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
+			}
 			//其他一般情况(加法 16，乘法 8)
 			if(Math.Abs(inse_point.X - a1.X) <= 1e-6 && Math.Abs(inse_point.Y - a1.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - a2.X) <= 1e-6 && Math.Abs(inse_point.Y - a2.Y) <= 1e-6 ||
