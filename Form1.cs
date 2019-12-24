@@ -34,13 +34,12 @@ namespace Re0GIS
 		///标记版本号
 		///版本号格式：主版本号.子版本号[.编译版本号[.修正版本号]]
 		///this string may be using in various ways
-		const string channel = "A";
+		const string channel = "E";
 		///预计会使用到的通道
 		///Channel			Cname
 		///Early Preview	E		早期测试版
 		///Alpha			A		内部测试版
 		///Beta				B		外部测试版
-		///Demo				D		演示版
 		///Release			R		发行版
 		///
 
@@ -136,7 +135,7 @@ namespace Re0GIS
 					is_polygonshp_open = true;
 					polygons = new PolyGons();
 					polygons.ReadShapeFile(filepath_polygon);
-					if(polygons.MH.ShapeType == 5)
+					if (polygons.MH.ShapeType == 5)
 					{
 						polygons.DrawPolyGons(MainPicBox);
 						stopWatch.Start();
@@ -200,21 +199,6 @@ namespace Re0GIS
 			inname_form = !inname_form;
 		}
 	}
-
-	struct EdgeInfo
-	{
-		int ymax, ymin;//Y的上下端点
-		float k, xmin;//斜率倒数和X的下端点
-		public int YMax { get { return ymax; } set { ymax = value; } }
-		public int YMin { get { return ymin; } set { ymin = value; } }
-		public float XMin { get { return xmin; } set { xmin = value; } }
-		public float K { get { return k; } set { k = value; } }
-		public EdgeInfo(int x1, int y1, int x2, int y2)
-		{
-			ymax = y2; ymin = y1; xmin = (float)x1; k = (float)(x1 - x2) / (float)(y1 - y2);
-		}
-	}
-	//扫描线填充算法预定义结构
 
 	struct ShapeHeader
 	{
@@ -1003,7 +987,7 @@ namespace Re0GIS
 			{
 				pts[i].X = (float)(InterSectPoints[i].X - (float)MH.XMin) / ((float)MH.XMax - (float)MH.XMin) * pb.Width;
 				pts[i].Y = (float)(pb.Height - (InterSectPoints[i].Y - (float)MH.YMin) / ((float)MH.YMax - (float)MH.YMin) * pb.Height);
-				Console.WriteLine("第{0}个交点：" + InterSectPoints[i].X + " " + InterSectPoints[i].Y, i + 1);
+				//Console.WriteLine("第{0}个交点：" + InterSectPoints[i].X + " " + InterSectPoints[i].Y, i + 1);
 				g.DrawEllipse(draw_point, pts[i].X - 5, pts[i].Y - 5, 9, 9);
 				g.FillEllipse(brush, pts[i].X - 5, pts[i].Y - 5, 9, 9);
 				//str = str + pts[i].X + "," + pts[i].Y + "\n";
@@ -1157,9 +1141,10 @@ namespace Re0GIS
 					polyG.ymax = br.ReadDouble();
 					polyG.NumOfParts = br.ReadInt32();
 					polyG.NumOfPoints = br.ReadInt32();
+
 					//====
 					polyG.Parts = new int[polyG.NumOfParts];//长度为NumOfParts的数组，即线的数量
-					for(int i = 0; i < polyG.NumOfParts; i++)
+					for (int i = 0; i < polyG.NumOfParts; i++)
 					{
 						polyG.Parts[i] = br.ReadInt32();
 					}
@@ -1176,7 +1161,7 @@ namespace Re0GIS
 					PreVer = VertexFirst;
 					//====
 					polyG.points.Add(VertexFirst);
-					for(int i = 1; i < polyG.NumOfPoints - 1; i++)
+					for (int i = 1; i < polyG.NumOfPoints - 1; i++)
 					{
 						VertexPolygon VertexMid = new VertexPolygon();
 						//====
@@ -1198,12 +1183,23 @@ namespace Re0GIS
 					VetLast.ID = VetLast.PreVertex.ID + 1;
 					VetLast.PolygonID = polyG.id;
 					VetLast.NextVertex = null;
+					VetLast.PreVertex.NextVertex = VertexFirst;
+					VertexFirst.PreVertex = VetLast.PreVertex;
 					VetLast.X = br.ReadDouble();
 					VetLast.Y = br.ReadDouble();
 					//====
 					polyG.points.Add(VetLast);
 					polygons.Add(polyG);
 					count++;
+
+					/*PreVer.NextVertex = VertexFirst;
+					VertexFirst.PreVertex = PreVer;
+					br.ReadDouble();
+					br.ReadDouble();
+					//====
+					polygons.Add(polyG);
+					count++;
+					*/
 				}
 			}
 			catch (EndOfStreamException e)
@@ -1217,7 +1213,7 @@ namespace Re0GIS
 		{
 			Graphics g = pb.CreateGraphics();
 			g.Clear(Color.Gray);
-			foreach(PolyGon pg in polygons)
+			foreach (PolyGon pg in polygons)
 			{
 				int iSeed = 10;
 				Random ro = new Random(iSeed);
@@ -1231,67 +1227,36 @@ namespace Re0GIS
 				//生成随机颜色
 
 				Pen penDrawLine = new Pen(Color.Red, 3);
-				Pen penDrawPolygon = new Pen(Color.FromArgb(R, G, B), 1);
+				Pen draw_point = new Pen(Color.Red, 1);
+				Brush brush = new SolidBrush(Color.FromArgb(R, G, B));
+				Brush font = new SolidBrush(Color.FromArgb(R, G, B));
+				Brush elli = new SolidBrush(Color.Blue);
+				Font myFont = new Font("宋体", 16, FontStyle.Bold);
 				PointF[] pointsF = new PointF[pg.points.Count];
-				for(int i = 0; i < pointsF.Length; i++)
+				for (int i = 0; i < pointsF.Length; i++)
 				{
 					pointsF[i].X = (float)((pg.points[i].X - MH.XMin) / (MH.XMax - MH.XMin) * pb.Width);
 					pointsF[i].Y = (float)(pb.Height - (pg.points[i].Y - MH.YMin) / (MH.YMax - MH.YMin) * pb.Height);
 				}
 				g.DrawLines(penDrawLine, pointsF);
+				g.FillPolygon(brush, pointsF);
+				g.DrawEllipse(draw_point, pointsF[pointsF.Length - 2].X - 5, pointsF[pointsF.Length - 2].Y - 5, 9, 9);
+				g.FillEllipse(elli, pointsF[pointsF.Length - 2].X - 5, pointsF[pointsF.Length - 2].Y - 5, 9, 9);
+				for (int i = 0; i < pointsF.Length; i++)
+				{
+					g.DrawEllipse(draw_point, pointsF[i].X, pointsF[i].Y, 24, 24);
+					g.FillEllipse(elli, pointsF[i].X, pointsF[i].Y, 24, 24);
+					if (i < pointsF.Length - 2)
+					{
+						g.DrawString((i + 2).ToString(), myFont, font, pointsF[i].X, pointsF[i].Y);
+					}
+					else
+					{
+						g.DrawString((i + 3 - pointsF.Length).ToString(), myFont, font, pointsF[i].X, pointsF[i].Y);
+					}
+					
+				}
 				//绘制多边形面
-
-				EdgeInfo[] edgelist = new EdgeInfo[100];
-				int j = 0, yu = 0, yd = 1024;
-				for(int i = 0; i < pointsF.Length - 1; i++)
-				{
-					if(pointsF[i].Y > yu) yu = (int)pointsF[i].Y;
-					if(pointsF[i].Y < yd) yd = (int)pointsF[i].Y;
-					if(pointsF[i].Y != pointsF[i + 1].Y)
-					{
-						if(pointsF[i].Y > pointsF[i + 1].Y)
-						{
-							edgelist[j++] = new EdgeInfo((int)pointsF[i + 1].X, (int)pointsF[i + 1].Y, (int)pointsF[i].X, (int)pointsF[i].Y);
-						}
-						else
-						{
-							edgelist[j++] = new EdgeInfo((int)pointsF[i].X, (int)pointsF[i].Y, (int)pointsF[i + 1].X, (int)pointsF[i + 1].Y);
-						}
-					}
-				}
-				for(int y = yd; y < yu; y++)
-				{
-					//AEL
-					var sorted = from item in edgelist
-								 where y < item.YMax && y >= item.YMin
-								 orderby item.XMin, item.K
-								 select item;
-					int flag = 0;
-					foreach(var item in sorted)
-					{
-						//FirstX = 0;
-						if(flag == 0)
-						{
-							FirstX = (int)(item.XMin + 0.5);
-							flag++;
-						}
-						else
-						{
-							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
-							g.DrawLine(penDrawPolygon, (int)(item.XMin + 0.5), y, FirstX - 1, y);
-							flag = 0;
-						}
-					}
-					for(int i = 0; i < j; i++)
-					{
-						if(y < edgelist[i].YMax - 1 && y > edgelist[i].YMin)
-						{
-							edgelist[i].XMin += edgelist[i].K;
-						}
-					}
-				}
-				
-				//扫描线填充
 			}
 		}
 		//绘制多边形(边加粗，内部填充)
@@ -1315,19 +1280,19 @@ namespace Re0GIS
 		public void CheckLineInPolygonsInse()
 		{
 			bool Inse;
-			for(int front = 0; front <= polygons.Count - 2; front++)
+			for (int front = 0; front <= polygons.Count - 2; front++)
 			{
-				for(int rear = front + 1; rear <= polygons.Count - 1; rear++)
+				for (int rear = front + 1; rear <= polygons.Count - 1; rear++)
 				{
 					PointF left_up = new PointF((float)polygons[front].xmin, (float)polygons[front].ymax);
 					PointF right_up = new PointF((float)polygons[front].xmax, (float)polygons[front].ymax);
 					PointF left_down = new PointF((float)polygons[front].xmin, (float)polygons[front].ymin);
 					PointF right_down = new PointF((float)polygons[front].xmax, (float)polygons[front].ymin);
 					//多边形front的对角线
-					if(polygons[front].ymax < polygons[rear].ymin
-						|| polygons[front].xmax < polygons[rear].xmin
-						|| polygons[rear].ymax < polygons[front].ymin
-						|| polygons[rear].xmax < polygons[front].xmin)
+					if (polygons[front].ymax < polygons[rear].ymin ||
+						polygons[front].xmax < polygons[rear].xmin ||
+						polygons[rear].ymax < polygons[front].ymin ||
+						polygons[rear].xmax < polygons[front].xmin)
 					{
 						Console.WriteLine("多边形{0}与多边形{1}不可能相交", front, rear);
 						loop_time++;
@@ -1337,22 +1302,31 @@ namespace Re0GIS
 					{
 						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rear);
 						List<int> blacklist_j = new List<int>();
-						for(int i = 0; i < polygons[front].points.Count - 1; i++)
+						List<PointF> queue = new List<PointF>();
+						List<PointF> stack = new List<PointF>();
+						PointF frontInsePoint = new PointF();
+						PointF rearInsePoint = new PointF();
+						int insePointsCountInPear = 0;
+						int FirstFrondId = -9;
+						int FirstRearID = -9;
+						VertexPolygon FirstInterSectPoint = new VertexPolygon();
+						for (int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
-							for(int j = 0; j < polygons[rear].points.Count - 1; j++)
+							PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
+							PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
+							//PointF pathPointF = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
+							for (int j = 0; j < polygons[rear].points.Count - 1; j++)
 							{
 								loop_time++;
-								if(blacklist_j.Contains(j))
+								if (blacklist_j.Contains(j))
 								{
 									Console.WriteLine("边{0}跳过", j);
 									continue;
 								}
 								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rear, j);
-								PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
-								PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
 								PointF point2a = new PointF((float)polygons[rear].points[j].X, (float)polygons[rear].points[j].Y);
 								PointF point2b = new PointF((float)polygons[rear].points[j + 1].X, (float)polygons[rear].points[j + 1].Y);
-								if((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
+								if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
 									point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
 									//多边形rear的检查边点A在碰撞箱内
 									(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
@@ -1365,10 +1339,17 @@ namespace Re0GIS
 									)
 								{
 									Inse = CheckIfInse(point1a, point1b, point2a, point2b);
-									if(Inse)
+									if (Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
-										CalInsePoint(point1a, point1b, point2a, point2b);
+										frontInsePoint = rearInsePoint;
+										rearInsePoint = CalInsePoint(point1a, point1b, point2a, point2b);
+										FirstInterSectPoint.X = rearInsePoint.X;
+										FirstInterSectPoint.Y = rearInsePoint.Y;
+										FirstInterSectPoint.ID = 0;
+										FirstFrondId = i;
+										FirstRearID = j;
+										insePointsCountInPear++;
 									}
 									else
 									{
@@ -1381,6 +1362,122 @@ namespace Re0GIS
 									Console.WriteLine("边{0}已加入多边形{1}的黑名单", j, front);
 									blacklist_j.Add(j);
 								}
+								if (FirstFrondId != -9 && FirstRearID != -9) break;
+							}
+							if (FirstFrondId != -9 && FirstRearID != -9) break;
+						}
+
+						VertexPolygon poly1Point1 = polygons[front].points[FirstFrondId];
+						VertexPolygon poly2Point1 = polygons[rear].points[FirstFrondId];
+						VertexPolygon FrontPoint = new VertexPolygon();
+						VertexPolygon RearPoint = new VertexPolygon();
+						VertexPolygon RearHeadPoint = new VertexPolygon();
+						VertexPolygon FrontHeadPoint = new VertexPolygon();
+
+						RearHeadPoint.X = rearInsePoint.X;
+						RearHeadPoint.Y = rearInsePoint.Y;
+						RearHeadPoint.NextVertex = poly2Point1.NextVertex;
+						RearHeadPoint.PreVertex = poly2Point1;
+						poly2Point1.NextVertex = RearHeadPoint;
+						RearHeadPoint.ID = -9999;
+
+						FrontHeadPoint.X = rearInsePoint.X;
+						FrontHeadPoint.Y = rearInsePoint.Y;
+						FrontHeadPoint.NextVertex = poly1Point1.NextVertex;
+						FrontHeadPoint.ID = -9999;
+						FrontHeadPoint.PreVertex = poly1Point1;
+						poly1Point1.NextVertex = FrontHeadPoint;
+
+						VertexPolygon IntersectPointInP1 = new VertexPolygon();
+						VertexPolygon IntersectPointInP2 = new VertexPolygon();
+
+						int BreakTag1 = 0;
+						int BreakTag2 = 0;
+
+						FrontPoint.X = FrontHeadPoint.X;
+						FrontPoint.Y = FrontHeadPoint.Y;
+						FrontPoint.ID = -999;
+						FrontPoint.NextVertex = FrontHeadPoint.NextVertex;
+
+						RearPoint.X = RearHeadPoint.X;
+						RearPoint.Y = RearHeadPoint.Y;
+						RearPoint.ID = -999;
+						RearPoint.NextVertex = RearHeadPoint.NextVertex;
+
+						int FirstStep = 1;
+						int Begin = 1;
+						while (FrontPoint.ID != FrontHeadPoint.ID)
+						{
+							PointF point1a = new PointF((float)FrontPoint.X, (float)FrontPoint.Y);
+							PointF point1b = new PointF((float)FrontPoint.NextVertex.X, (float)FrontPoint.NextVertex.Y);
+							//PointF pathPointF = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
+							int InterSectPoly1ID = -9;
+							int InterSectPoly2ID = -9;
+							RearPoint = RearHeadPoint;
+							while (poly2Point1.ID != RearPoint.ID)
+							{
+								BreakTag1 = 0;
+								PointF point2a = new PointF((float)RearPoint.X, (float)RearPoint.Y);
+								PointF point2b = new PointF((float)RearPoint.NextVertex.X, (float)RearPoint.NextVertex.Y);
+								if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
+									point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
+									//多边形rear的检查边点A在碰撞箱内
+									(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
+									point2b.Y > polygons[front].ymin && point2b.Y < polygons[front].ymax) ||
+									//多边形rear的检查边点B在碰撞箱内
+									CheckIfInse(point2a, point2b, left_up, right_down) ||
+									//多边形rear的检查边与碰撞箱的＼对角线有交点
+									CheckIfInse(point2a, point2b, right_up, left_down)
+									//多边形rear的检查边与碰撞箱的／对角线有交点
+									)
+								{
+									Inse = CheckIfInse(point1a, point1b, point2a, point2b);
+									if (Inse && FirstStep != 1)
+									{
+										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
+										frontInsePoint = rearInsePoint;
+										rearInsePoint = CalInsePoint(point1a, point1b, point2a, point2b);
+										FirstInterSectPoint.X = rearInsePoint.X;
+										FirstInterSectPoint.Y = rearInsePoint.Y;
+										FirstInterSectPoint.ID = 0;
+										//Console.WriteLine(FirstInterSectPoint.X.ToString() + "," + FirstInterSectPoint.Y.ToString());
+										insePointsCountInPear++;
+										InterSectPoly1ID = FrontPoint.ID;
+										InterSectPoly2ID = RearPoint.ID;
+
+										IntersectPointInP1.X = rearInsePoint.X;
+										IntersectPointInP1.Y = rearInsePoint.Y;
+										IntersectPointInP1.ID = -999;
+										IntersectPointInP1.NextVertex = FrontPoint.NextVertex;
+
+										IntersectPointInP2.ID = -999;
+										IntersectPointInP2.X = rearInsePoint.X;
+										IntersectPointInP2.Y = rearInsePoint.Y;
+										IntersectPointInP2.NextVertex = RearPoint.NextVertex;
+										BreakTag1 = 1;
+										RearHeadPoint = IntersectPointInP2;
+										break;
+									}
+									else
+									{
+										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
+									}
+									FirstStep = 0;
+								}
+								if (BreakTag1 == 0)
+								{
+									RearPoint = RearPoint.NextVertex;
+								}
+							}
+							if (BreakTag1 == 1)
+							{
+								FrontPoint = IntersectPointInP1;
+								FirstStep = 1;
+							}
+							else
+							{
+								FrontPoint = FrontPoint.NextVertex;
+								//MessageBox.Show(FrontPoint.ID.ToString() + "+" + RearPoint.ID.ToString());
 							}
 						}
 						//检查所有边
@@ -1413,7 +1510,7 @@ namespace Re0GIS
 		{
 			check_time++;
 			double delta = Determinant(a2.X - a1.X, b2.X - b1.X, b2.Y - b1.Y, a2.Y - a1.Y);
-			if(Math.Abs(delta) <= (1e-6))
+			if (Math.Abs(delta) <= (1e-6))
 			{
 				return false;
 			}
@@ -1423,7 +1520,7 @@ namespace Re0GIS
 			///特别的当两条直线都垂直X坐标轴斜率不存在时则判别两直线的X值是否相等
 			///即可。delta大于零，向量2在向量1的逆时针方向，小于零在顺时针方向。
 			double lamda = Determinant(b2.X - b1.X, a1.X - b1.X, a1.Y - b1.Y, b2.Y - b1.Y) / delta;
-			if(lamda > 1 || lamda < 0)
+			if (lamda > 1 || lamda < 0)
 			{
 				return false;
 			}
@@ -1435,7 +1532,7 @@ namespace Re0GIS
 			///当lamda大于1时，(a1 - b1)长度大于(a2 - a1)长度乘向量2与向量1夹角正弦值，
 			///这时线段也无交点。当lamda小于等于1大于0时才可能有交点。
 			double myu = Determinant(a2.X - a1.X, a1.X - b1.X, a1.Y - b1.Y, a2.Y - a1.Y) / delta;
-			if(myu > 1 || myu < 0)
+			if (myu > 1 || myu < 0)
 			{
 				return false;
 			}
@@ -1455,28 +1552,28 @@ namespace Re0GIS
 		///2x2矩阵格式：
 		///v1	v2
 		///v4	v3
-		private void CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
+		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
 			PointF inse_point = new PointF();
-			if(Math.Abs(a1.X - a2.X) <= 1e-6)
+			if (Math.Abs(a1.X - a2.X) <= 1e-6)
 			{
 				inse_point.X = a1.X;
 				inse_point.Y = (a1.X - b1.X) / (b1.X - b2.X) * (b1.Y - b2.Y) + b1.Y;
 			}
 			//线段A垂直X坐标轴(加法 4，乘法 2)
-			else if(Math.Abs(b1.X - b2.X) <= 1e-6)
+			else if (Math.Abs(b1.X - b2.X) <= 1e-6)
 			{
 				inse_point.X = b1.X;
 				inse_point.Y = (b1.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 			}
 			//线段B垂直X坐标轴(加法 4，乘法 2)
-			else if(Math.Abs(a1.Y - a2.Y) <= 1e-6)
+			else if (Math.Abs(a1.Y - a2.Y) <= 1e-6)
 			{
 				inse_point.Y = a1.Y;
 				inse_point.X = (a1.Y - b1.Y) / (b2.Y - b1.Y) * (b2.X - b1.X) + b1.X;
 			}
 			//线段A平行X坐标轴(加法 4，乘法 2)
-			else if(Math.Abs(b1.Y - b2.Y) <= 1e-6)
+			else if (Math.Abs(b1.Y - b2.Y) <= 1e-6)
 			{
 				inse_point.Y = b1.Y;
 				inse_point.X = (b1.Y - a1.Y) / (a2.Y - a1.Y) * (a2.X - a1.X) + a1.X;
@@ -1488,7 +1585,7 @@ namespace Re0GIS
 				inse_point.Y = (inse_point.X - a1.X) / (a1.X - a2.X) * (a1.Y - a2.Y) + a1.Y;
 			}
 			//其他一般情况(加法 16，乘法 8)
-			if(Math.Abs(inse_point.X - a1.X) <= 1e-6 && Math.Abs(inse_point.Y - a1.Y) <= 1e-6 ||
+			if (Math.Abs(inse_point.X - a1.X) <= 1e-6 && Math.Abs(inse_point.Y - a1.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - a2.X) <= 1e-6 && Math.Abs(inse_point.Y - a2.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - b1.X) <= 1e-6 && Math.Abs(inse_point.Y - b1.Y) <= 1e-6 ||
 				Math.Abs(inse_point.X - b2.X) <= 1e-6 && Math.Abs(inse_point.Y - b2.Y) <= 1e-6
@@ -1502,7 +1599,8 @@ namespace Re0GIS
 				inse_points.Add(inse_point);
 				//非端点时加一点
 			}
-			//Console.WriteLine(inse_point.ToString());
+			return inse_point;
+			Console.WriteLine(inse_point.ToString());
 		}
 		///计算交点坐标
 		///通过线段两点式方程联立确定交点坐标
@@ -1536,6 +1634,30 @@ namespace Re0GIS
 					//Console.WriteLine("该点在多边形{0}内", poly.id);
 				}
 			}
+		}
+		///判断点是否在多边形内
+		///参数PointF pt指定点，检查所有多边形
+		public bool IsPointInPolygon(PointF pt, PolyGon poly)
+		{
+			bool c = false;//初始置否
+			if (pt.X < poly.xmin || pt.X > poly.xmax || pt.Y < poly.ymin || pt.Y > poly.ymax)
+			{
+				c = false;
+			}
+			//碰撞箱判别
+			else
+			{
+				int i, j, nvert;
+				nvert = poly.points.Count;
+				for (i = 0, j = nvert - 2; i < nvert - 1; j = i++)
+				{
+					if (((poly.points[i].Y > pt.Y) != (poly.points[j].Y > pt.Y)) &&
+						(pt.X < (poly.points[j].X - poly.points[i].X) * (pt.Y - poly.points[i].Y) / (poly.points[j].Y - poly.points[i].Y) + poly.points[i].X))
+						c = !c;
+				}
+			}
+			return c;
+			//扫描线交多边形偶数次则点在多边形内，否则点在多边形外
 		}
 		///判断点是否在多边形内
 		///参数PointF pt指定点，PolyGon poly指定一个多边形
