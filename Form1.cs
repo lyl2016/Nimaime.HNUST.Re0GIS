@@ -1302,19 +1302,8 @@ namespace Re0GIS
 					{
 						Console.WriteLine("多边形{0}与多边形{1}可能相交", front, rear);
 						List<int> blacklist_j = new List<int>();
-						List<PointF> queue = new List<PointF>();
-						List<PointF> stack = new List<PointF>();
-						PointF frontInsePoint = new PointF();
-						PointF rearInsePoint = new PointF();
-						int insePointsCountInPear = 0;
-						int FirstFrondId = -9;
-						int FirstRearID = -9;
-						VertexPolygon FirstInterSectPoint = new VertexPolygon();
 						for (int i = 0; i < polygons[front].points.Count - 1; i++)
 						{
-							PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
-							PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
-							//PointF pathPointF = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
 							for (int j = 0; j < polygons[rear].points.Count - 1; j++)
 							{
 								loop_time++;
@@ -1324,6 +1313,8 @@ namespace Re0GIS
 									continue;
 								}
 								Console.WriteLine("开始检查多边形{0}的边{1}与多边形{2}的边{3}", front, i, rear, j);
+								PointF point1a = new PointF((float)polygons[front].points[i].X, (float)polygons[front].points[i].Y);
+								PointF point1b = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
 								PointF point2a = new PointF((float)polygons[rear].points[j].X, (float)polygons[rear].points[j].Y);
 								PointF point2b = new PointF((float)polygons[rear].points[j + 1].X, (float)polygons[rear].points[j + 1].Y);
 								if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
@@ -1342,14 +1333,7 @@ namespace Re0GIS
 									if (Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
-										frontInsePoint = rearInsePoint;
-										rearInsePoint = CalInsePoint(point1a, point1b, point2a, point2b);
-										FirstInterSectPoint.X = rearInsePoint.X;
-										FirstInterSectPoint.Y = rearInsePoint.Y;
-										FirstInterSectPoint.ID = 0;
-										FirstFrondId = i;
-										FirstRearID = j;
-										insePointsCountInPear++;
+										CalInsePoint(point1a, point1b, point2a, point2b);
 									}
 									else
 									{
@@ -1362,122 +1346,6 @@ namespace Re0GIS
 									Console.WriteLine("边{0}已加入多边形{1}的黑名单", j, front);
 									blacklist_j.Add(j);
 								}
-								if (FirstFrondId != -9 && FirstRearID != -9) break;
-							}
-							if (FirstFrondId != -9 && FirstRearID != -9) break;
-						}
-
-						VertexPolygon poly1Point1 = polygons[front].points[FirstFrondId];
-						VertexPolygon poly2Point1 = polygons[rear].points[FirstFrondId];
-						VertexPolygon FrontPoint = new VertexPolygon();
-						VertexPolygon RearPoint = new VertexPolygon();
-						VertexPolygon RearHeadPoint = new VertexPolygon();
-						VertexPolygon FrontHeadPoint = new VertexPolygon();
-
-						RearHeadPoint.X = rearInsePoint.X;
-						RearHeadPoint.Y = rearInsePoint.Y;
-						RearHeadPoint.NextVertex = poly2Point1.NextVertex;
-						RearHeadPoint.PreVertex = poly2Point1;
-						poly2Point1.NextVertex = RearHeadPoint;
-						RearHeadPoint.ID = -9999;
-
-						FrontHeadPoint.X = rearInsePoint.X;
-						FrontHeadPoint.Y = rearInsePoint.Y;
-						FrontHeadPoint.NextVertex = poly1Point1.NextVertex;
-						FrontHeadPoint.ID = -9999;
-						FrontHeadPoint.PreVertex = poly1Point1;
-						poly1Point1.NextVertex = FrontHeadPoint;
-
-						VertexPolygon IntersectPointInP1 = new VertexPolygon();
-						VertexPolygon IntersectPointInP2 = new VertexPolygon();
-
-						int BreakTag1 = 0;
-						int BreakTag2 = 0;
-
-						FrontPoint.X = FrontHeadPoint.X;
-						FrontPoint.Y = FrontHeadPoint.Y;
-						FrontPoint.ID = -999;
-						FrontPoint.NextVertex = FrontHeadPoint.NextVertex;
-
-						RearPoint.X = RearHeadPoint.X;
-						RearPoint.Y = RearHeadPoint.Y;
-						RearPoint.ID = -999;
-						RearPoint.NextVertex = RearHeadPoint.NextVertex;
-
-						int FirstStep = 1;
-						int Begin = 1;
-						while (FrontPoint.ID != FrontHeadPoint.ID)
-						{
-							PointF point1a = new PointF((float)FrontPoint.X, (float)FrontPoint.Y);
-							PointF point1b = new PointF((float)FrontPoint.NextVertex.X, (float)FrontPoint.NextVertex.Y);
-							//PointF pathPointF = new PointF((float)polygons[front].points[i + 1].X, (float)polygons[front].points[i + 1].Y);
-							int InterSectPoly1ID = -9;
-							int InterSectPoly2ID = -9;
-							RearPoint = RearHeadPoint;
-							while (poly2Point1.ID != RearPoint.ID)
-							{
-								BreakTag1 = 0;
-								PointF point2a = new PointF((float)RearPoint.X, (float)RearPoint.Y);
-								PointF point2b = new PointF((float)RearPoint.NextVertex.X, (float)RearPoint.NextVertex.Y);
-								if ((point2a.X > polygons[front].xmin && point2a.X < polygons[front].xmax &&
-									point2a.Y > polygons[front].ymin && point2a.Y < polygons[front].ymax) ||
-									//多边形rear的检查边点A在碰撞箱内
-									(point2b.X > polygons[front].xmin && point2b.X < polygons[front].xmax &&
-									point2b.Y > polygons[front].ymin && point2b.Y < polygons[front].ymax) ||
-									//多边形rear的检查边点B在碰撞箱内
-									CheckIfInse(point2a, point2b, left_up, right_down) ||
-									//多边形rear的检查边与碰撞箱的＼对角线有交点
-									CheckIfInse(point2a, point2b, right_up, left_down)
-									//多边形rear的检查边与碰撞箱的／对角线有交点
-									)
-								{
-									Inse = CheckIfInse(point1a, point1b, point2a, point2b);
-									if (Inse && FirstStep != 1)
-									{
-										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
-										frontInsePoint = rearInsePoint;
-										rearInsePoint = CalInsePoint(point1a, point1b, point2a, point2b);
-										FirstInterSectPoint.X = rearInsePoint.X;
-										FirstInterSectPoint.Y = rearInsePoint.Y;
-										FirstInterSectPoint.ID = 0;
-										//Console.WriteLine(FirstInterSectPoint.X.ToString() + "," + FirstInterSectPoint.Y.ToString());
-										insePointsCountInPear++;
-										InterSectPoly1ID = FrontPoint.ID;
-										InterSectPoly2ID = RearPoint.ID;
-
-										IntersectPointInP1.X = rearInsePoint.X;
-										IntersectPointInP1.Y = rearInsePoint.Y;
-										IntersectPointInP1.ID = -999;
-										IntersectPointInP1.NextVertex = FrontPoint.NextVertex;
-
-										IntersectPointInP2.ID = -999;
-										IntersectPointInP2.X = rearInsePoint.X;
-										IntersectPointInP2.Y = rearInsePoint.Y;
-										IntersectPointInP2.NextVertex = RearPoint.NextVertex;
-										BreakTag1 = 1;
-										RearHeadPoint = IntersectPointInP2;
-										break;
-									}
-									else
-									{
-										//Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}不相交", front, i, rear, j);
-									}
-									FirstStep = 0;
-								}
-								if (BreakTag1 == 0)
-								{
-									RearPoint = RearPoint.NextVertex;
-								}
-							}
-							if (BreakTag1 == 1)
-							{
-								FrontPoint = IntersectPointInP1;
-								FirstStep = 1;
-							}
-							else
-							{
-								FrontPoint = FrontPoint.NextVertex;
-								//MessageBox.Show(FrontPoint.ID.ToString() + "+" + RearPoint.ID.ToString());
 							}
 						}
 						//检查所有边
