@@ -51,7 +51,7 @@ namespace Re0GIS
 		PolyLines polylines;//用于Form1内调用
 		PolyGons polygons;//用于Form1内调用
 		public bool inname_form = true;///mark the method to represent of coordinate system
-		///true for screen coordinate, false for the coordinate of shapefile
+									   ///true for screen coordinate, false for the coordinate of shapefile
 
 		public Form1()
 		{
@@ -289,7 +289,7 @@ namespace Re0GIS
 		public List<PolyLine> polylines;//由多条折线段构成的折线组
 		public static int NumOfInterSects = 0;//设置交点计数，初值为零，设置静态用于计数
 		public List<IntersectNode> InterSectPoints;//由多个交点构成的交点组
-		//public List<PointF> inse_points = new List<PointF>();
+												   //public List<PointF> inse_points = new List<PointF>();
 		public ShapeHeader MH;
 		int count = 0;
 		public int Count
@@ -1028,6 +1028,7 @@ namespace Re0GIS
 		public double X;//点坐标X
 		public double Y;//点坐标Y
 		public int PolygonID;//所在面ID
+		public bool IsKnotPoint;//标记是否结点
 		public VertexPolygon()
 		{
 			PreVertex = null;
@@ -1036,7 +1037,21 @@ namespace Re0GIS
 		}
 		//默认构造函数，内含前一顶点ID以及后一顶点ID，以及构造时的初始ID
 	}
-	//定义类Vertex(顶点)
+	//定义顶点类
+
+	class IntersectPoint
+	{
+		public int ID;
+		public IntersectPoint PreInsePoint;
+		public IntersectPoint NextInsePoint;
+		public int LPolygID;
+		public int RPolygID;
+		public int LPolyGLineID;
+		public int RPolyGLineID;
+		public double X;
+		public double Y;
+	}
+	//定义交点类
 
 /*	class BasicLine
 	{
@@ -1063,7 +1078,7 @@ namespace Re0GIS
 		public int NumOfParts;				//SHP内面数量
 		public int NumOfPoints;				//SHP内点数量
 		public int[] Parts;					//SHP内每个部分索引数组
-		public List<VertexPolygon> points;			//由顶点构成的集合
+		public List<VertexPolygon> points;	//由顶点构成的集合
 	//	public List<BasicLine> lines;		//由多边形基础线段构成的集合
 		public PolyGon()
 		{
@@ -1077,7 +1092,7 @@ namespace Re0GIS
 	{
 		private int FirstX;
 		public List<PolyGon> polygons;//由多个面构成的面组
-		public List<PointF> inse_points = new List<PointF>();
+		public List<IntersectPoint> inse_points = new List<IntersectPoint>();
 		public ShapeHeader MH;
 		public string inname = "";
 		//用来存放IsPointInPolygon函数的数据
@@ -1333,7 +1348,7 @@ namespace Re0GIS
 									if (Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
-										CalInsePoint(point1a, point1b, point2a, point2b);
+										CalInsePoint(point1a, point1b, point2a, point2b, front, rear, i, j);
 									}
 									else
 									{
@@ -1359,6 +1374,17 @@ namespace Re0GIS
 			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过(节省大部分时间)
 			///然后具体检查线段相交
 			///当多边形rear的一条线段不在front内的时候跳过行列式运算，并判定不相交，该线段列入front的黑名单
+			for (int polygonID = 0; polygonID < polygons.Count; polygonID++)
+			{
+				for (int pointID = 0; pointID < polygons[polygonID].points.Count; pointID++)
+				{
+					if (false)
+					{
+						polygons[polygonID].points[pointID].IsKnotPoint = true;
+					}
+				}
+			}
+			///用来抓结点
 		}
 		///检查多边形内线段相交
 		///1.每次检查两个多边形，分别标记为front和rear。
@@ -1420,9 +1446,13 @@ namespace Re0GIS
 		///2x2矩阵格式：
 		///v1	v2
 		///v4	v3
-		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
+		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2, int front, int rear, int i, int j)
 		{
-			PointF inse_point = new PointF();
+			IntersectPoint inse_point = new IntersectPoint();
+			inse_point.LPolygID = front;
+			inse_point.RPolygID = rear;
+			inse_point.LPolyGLineID = i;
+			inse_point.LPolyGLineID = j;
 			if (Math.Abs(a1.X - a2.X) <= 1e-6)
 			{
 				inse_point.X = a1.X;
@@ -1467,7 +1497,8 @@ namespace Re0GIS
 				inse_points.Add(inse_point);
 				//非端点时加一点
 			}
-			return inse_point;
+			PointF inse_tmp = new PointF((float)inse_point.X, (float)inse_point.Y);
+			return inse_tmp;
 			Console.WriteLine(inse_point.ToString());
 		}
 		///计算交点坐标
