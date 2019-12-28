@@ -1,6 +1,6 @@
 ﻿namespace Re0GIS
 {
-	partial class Form1
+	partial class MainForm
 	{
 		/// <summary>
 		/// 必需的设计器变量。
@@ -32,11 +32,11 @@
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.File = new System.Windows.Forms.ToolStripMenuItem();
 			this.File_Open = new System.Windows.Forms.ToolStripMenuItem();
+			this.File_Open_PolyLine = new System.Windows.Forms.ToolStripMenuItem();
 			this.File_Open_Polygon = new System.Windows.Forms.ToolStripMenuItem();
 			this.File_Save = new System.Windows.Forms.ToolStripMenuItem();
 			this.VerString = new System.Windows.Forms.Label();
 			this.inname = new System.Windows.Forms.Label();
-			this.File_Open_PolyLine = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).BeginInit();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
@@ -79,20 +79,27 @@
             this.File_Open_PolyLine,
             this.File_Open_Polygon});
 			this.File_Open.Name = "File_Open";
-			this.File_Open.Size = new System.Drawing.Size(224, 26);
+			this.File_Open.Size = new System.Drawing.Size(122, 26);
 			this.File_Open.Text = "打开";
+			// 
+			// File_Open_PolyLine
+			// 
+			this.File_Open_PolyLine.Name = "File_Open_PolyLine";
+			this.File_Open_PolyLine.Size = new System.Drawing.Size(137, 26);
+			this.File_Open_PolyLine.Text = "折线";
+			this.File_Open_PolyLine.Click += new System.EventHandler(this.File_Open_PolyLine_Click);
 			// 
 			// File_Open_Polygon
 			// 
 			this.File_Open_Polygon.Name = "File_Open_Polygon";
-			this.File_Open_Polygon.Size = new System.Drawing.Size(224, 26);
+			this.File_Open_Polygon.Size = new System.Drawing.Size(137, 26);
 			this.File_Open_Polygon.Text = "多边形";
 			this.File_Open_Polygon.Click += new System.EventHandler(this.File_Open_Polygon_Click);
 			// 
 			// File_Save
 			// 
 			this.File_Save.Name = "File_Save";
-			this.File_Save.Size = new System.Drawing.Size(224, 26);
+			this.File_Save.Size = new System.Drawing.Size(122, 26);
 			this.File_Save.Text = "保存";
 			// 
 			// VerString
@@ -119,14 +126,7 @@
 			this.inname.TabIndex = 4;
 			this.inname.Click += new System.EventHandler(this.inname_Click);
 			// 
-			// File_Open_PolyLine
-			// 
-			this.File_Open_PolyLine.Name = "File_Open_PolyLine";
-			this.File_Open_PolyLine.Size = new System.Drawing.Size(224, 26);
-			this.File_Open_PolyLine.Text = "折线";
-			this.File_Open_PolyLine.Click += new System.EventHandler(this.File_Open_PolyLine_Click);
-			// 
-			// Form1
+			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -136,7 +136,7 @@
 			this.Controls.Add(this.MainPicBox);
 			this.Controls.Add(this.menuStrip1);
 			this.MainMenuStrip = this.menuStrip1;
-			this.Name = "Form1";
+			this.Name = "MainForm";
 			this.Text = "从零开始的GIS生活（BY：二枚目）";
 			this.Load += new System.EventHandler(this.Form1_Load);
 			((System.ComponentModel.ISupportInitialize)(this.MainPicBox)).EndInit();

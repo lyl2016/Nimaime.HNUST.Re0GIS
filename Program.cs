@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace Re0GIS
 {
-	static class Polygon
+	static class Re0GIS
 	{
 		/// <summary>
 		/// 应用程序的主入口点。
@@ -16,7 +16,7 @@ namespace Re0GIS
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new Form1());
+			Application.Run(new MainForm());
 		}
 	}
 }

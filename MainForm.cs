@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -24,7 +23,7 @@ namespace Re0GIS
 	/// inse				intersect 相交
 	/// inname				mark the IDs of some polygons that the mouse point is in
 	/// </summary>
-	public partial class Form1 : Form
+	public partial class MainForm : Form
 	{
 		//====
 		// 版本显示相关
@@ -53,7 +52,7 @@ namespace Re0GIS
 		public bool inname_form = true;///mark the method to represent of coordinate system
 									   ///true for screen coordinate, false for the coordinate of shapefile
 
-		public Form1()
+		public MainForm()
 		{
 			InitializeComponent();
 		}
@@ -1042,16 +1041,24 @@ namespace Re0GIS
 	class IntersectPoint
 	{
 		public int ID;
-		public IntersectPoint PreInsePoint;
-		public IntersectPoint NextInsePoint;
-		public int LPolygID;
-		public int RPolygID;
-		public int LPolyGLineID;
-		public int RPolyGLineID;
+		public int PolyGonIDFront;
+		public int PolyGonIDRear;
+		public int PolyGonLineIDFront;
+		public int PolygonLineIDRear;
 		public double X;
 		public double Y;
+		//public bool IsKnotPoint;
 	}
 	//定义交点类
+
+	class ArcLine
+	{
+		public int ID;
+		public List<VertexPolygon> RouteVert;
+		public PolyGon LeftPolyGon;
+		public PolyGon RightPolyGon;
+	}
+	//定义弧段类
 
 /*	class BasicLine
 	{
@@ -1093,12 +1100,14 @@ namespace Re0GIS
 		private int FirstX;
 		public List<PolyGon> polygons;//由多个面构成的面组
 		public List<IntersectPoint> inse_points = new List<IntersectPoint>();
+		public List<PointF> inse_pointsF = new List<PointF>();
 		public ShapeHeader MH;
 		public string inname = "";
 		//用来存放IsPointInPolygon函数的数据
 		int count = 0;
 		int loop_time = 0;
 		int check_time = 0;
+		int inse_pointsid = 0;
 		public int Count
 		{
 			get { return count; }
@@ -1348,7 +1357,18 @@ namespace Re0GIS
 									if (Inse)
 									{
 										Console.WriteLine("多边形{0}的边{1}与多边形{2}的边{3}相交", front, i, rear, j);
-										CalInsePoint(point1a, point1b, point2a, point2b, front, rear, i, j);
+										PointF inse_tmp = CalInsePoint(point1a, point1b, point2a, point2b);
+										inse_pointsF.Add(inse_tmp);
+										IntersectPoint insepoint = new IntersectPoint();
+										insepoint.X = inse_tmp.X;
+										insepoint.Y = inse_tmp.Y;
+										insepoint.PolyGonIDFront = front;
+										insepoint.PolyGonIDRear = rear;
+										insepoint.PolyGonLineIDFront = i;
+										insepoint.PolygonLineIDRear = j;
+										insepoint.ID = inse_pointsid;
+										inse_points.Add(insepoint);
+										inse_pointsid++;
 									}
 									else
 									{
@@ -1374,17 +1394,6 @@ namespace Re0GIS
 			///首先检查他们的碰撞箱，假如碰撞箱不交则跳过(节省大部分时间)
 			///然后具体检查线段相交
 			///当多边形rear的一条线段不在front内的时候跳过行列式运算，并判定不相交，该线段列入front的黑名单
-			for (int polygonID = 0; polygonID < polygons.Count; polygonID++)
-			{
-				for (int pointID = 0; pointID < polygons[polygonID].points.Count; pointID++)
-				{
-					if (false)
-					{
-						polygons[polygonID].points[pointID].IsKnotPoint = true;
-					}
-				}
-			}
-			///用来抓结点
 		}
 		///检查多边形内线段相交
 		///1.每次检查两个多边形，分别标记为front和rear。
@@ -1434,6 +1443,7 @@ namespace Re0GIS
 			///当大于0时，如果myu大于1，情况与上面类似，无交点。myu大于0小于等于1时可能有交点。
 			return true;
 			///综上所述，两线段有交点（不考虑共直线情况）需同时满足以下条件，delta不等于0，lamda和myu都在区间(0,1]内
+			///lamda和myu用于判断两条线段是否互相跨立
 		}
 		///跨立实验：通过两点坐标判断线段是否相交
 		///参数a1, a2, b1, b2分别为线段A, B的两端点
@@ -1446,13 +1456,9 @@ namespace Re0GIS
 		///2x2矩阵格式：
 		///v1	v2
 		///v4	v3
-		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2, int front, int rear, int i, int j)
+		private PointF CalInsePoint(PointF a1, PointF a2, PointF b1, PointF b2)
 		{
-			IntersectPoint inse_point = new IntersectPoint();
-			inse_point.LPolygID = front;
-			inse_point.RPolygID = rear;
-			inse_point.LPolyGLineID = i;
-			inse_point.LPolyGLineID = j;
+			PointF inse_point = new PointF();
 			if (Math.Abs(a1.X - a2.X) <= 1e-6)
 			{
 				inse_point.X = a1.X;
@@ -1489,12 +1495,12 @@ namespace Re0GIS
 				Math.Abs(inse_point.X - b2.X) <= 1e-6 && Math.Abs(inse_point.Y - b2.Y) <= 1e-6
 			)
 			{
-				inse_points.Add(inse_point);
+				//inse_points.Add(inse_point);
 				//Console.WriteLine("直线端点，不取");
 			}
 			else
 			{
-				inse_points.Add(inse_point);
+				//inse_points.Add(inse_point);
 				//非端点时加一点
 			}
 			PointF inse_tmp = new PointF((float)inse_point.X, (float)inse_point.Y);
@@ -1560,5 +1566,9 @@ namespace Re0GIS
 		}
 		///判断点是否在多边形内
 		///参数PointF pt指定点，PolyGon poly指定一个多边形
+		public static int CountTimes<T>(List<T> inputList, T searchItem)
+		{
+			return ((from t in inputList where t.Equals(searchItem) select t).Count());
+		}
 	}
 }
